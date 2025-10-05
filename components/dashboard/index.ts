@@ -1,0 +1,9 @@
+export { default as PersonalInfoSection } from "./PersonalInfoSection";
+export { default as EditProfileSection } from "./EditProfileSection";
+export { default as ManageAddressesSection } from "./ManageAddressesSection";
+export { default as MyOrdersSection } from "./MyOrdersSection";
+export { default as MyWishlistsSection } from "./MyWishlistsSection";
+export { default as MyCartSection } from "./MyCartSection";
+export { default as CouponsSection } from "./CouponsSection";
+export { default as ReviewsSection } from "./ReviewsSection";
+export { default as NotificationsSection } from "./NotificationsSection";
