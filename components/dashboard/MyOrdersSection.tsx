@@ -47,9 +47,9 @@ interface MyOrdersSectionProps {
   onTrackOrder: (order: Order) => void;
   onCancelOrder: (orderId: string) => void;
   onReturnReplace: (orderId: string) => void;
-  onWriteReview: (orderId: string, orderItems: any[]) => void;
+  onWriteReview: (orderId: string, orderItems: unknown[]) => void;
   isWithinReturnWindow: (order: Order) => boolean;
-  orderReviews: Map<string, any>;
+  orderReviews: Map<string, unknown>;
 }
 
 export default function MyOrdersSection({
@@ -183,58 +183,71 @@ export default function MyOrdersSection({
                         Order Items:
                       </h4>
                       <div className="space-y-3">
-                        {order.items.map((item: any, index: number) => (
-                          <div
-                            key={index}
-                            className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 p-3 bg-gray-50 rounded-lg"
-                          >
-                            {/* Product Image - Clickable */}
+                        {order.items.map((item: unknown, index: number) => {
+                          const itemData = item as {
+                            product: {
+                              _id?: string;
+                              id?: string;
+                              name: string;
+                              images?: string[];
+                            };
+                            quantity: number;
+                            price: number;
+                          };
+                          return (
                             <div
-                              className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() =>
-                                handleProductClick(
-                                  item.product._id || item.product.id,
-                                  item.product.name
-                                )
-                              }
+                              key={index}
+                              className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 p-3 bg-gray-50 rounded-lg"
                             >
-                              {item.product?.images?.[0] ? (
-                                <img
-                                  src={item.product.images[0]}
-                                  alt={item.product.name}
-                                  className="w-full h-full object-cover rounded"
-                                />
-                              ) : (
-                                <ShoppingBag className="w-6 h-6 text-gray-400" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              {/* Product Name - Clickable */}
-                              <h5
-                                className="font-medium text-sm sm:text-base cursor-pointer hover:text-blue-600 transition-colors"
+                              {/* Product Image - Clickable */}
+                              <div
+                                className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() =>
                                   handleProductClick(
-                                    item.product._id || item.product.id,
-                                    item.product.name
+                                    itemData.product._id || itemData.product.id,
+                                    itemData.product.name
                                   )
                                 }
                               >
-                                {item.product?.name || "Product"}
-                              </h5>
-                              <p className="text-xs sm:text-sm text-gray-600">
-                                Quantity: {item.quantity}
-                              </p>
-                              <p className="text-xs sm:text-sm text-gray-600">
-                                Price: ₹{item.price}
-                              </p>
+                                {itemData.product?.images?.[0] ? (
+                                  <img
+                                    src={itemData.product.images[0]}
+                                    alt={itemData.product.name}
+                                    className="w-full h-full object-cover rounded"
+                                  />
+                                ) : (
+                                  <ShoppingBag className="w-6 h-6 text-gray-400" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                {/* Product Name - Clickable */}
+                                <h5
+                                  className="font-medium text-sm sm:text-base cursor-pointer hover:text-blue-600 transition-colors"
+                                  onClick={() =>
+                                    handleProductClick(
+                                      itemData.product._id ||
+                                        itemData.product.id,
+                                      itemData.product.name
+                                    )
+                                  }
+                                >
+                                  {itemData.product?.name || "Product"}
+                                </h5>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  Quantity: {itemData.quantity}
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  Price: ₹{itemData.price}
+                                </p>
+                              </div>
+                              <div className="text-right sm:text-right">
+                                <p className="font-medium text-sm sm:text-base">
+                                  ₹{itemData.price * itemData.quantity}
+                                </p>
+                              </div>
                             </div>
-                            <div className="text-right sm:text-right">
-                              <p className="font-medium text-sm sm:text-base">
-                                ₹{item.price * item.quantity}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 

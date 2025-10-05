@@ -225,8 +225,8 @@ export default function ProductPage() {
         setShowReviewModal(false);
         showToast("Review submitted successfully!");
       }
-    } catch (error: any) {
-      showToast(error.message || "Failed to submit review");
+    } catch (error: unknown) {
+      showToast((error as Error).message || "Failed to submit review");
     } finally {
       setReviewSubmitting(false);
     }
@@ -272,8 +272,8 @@ export default function ProductPage() {
         setShowReviewModal(false);
         showToast("Review updated successfully!");
       }
-    } catch (error: any) {
-      showToast(error.message || "Failed to update review");
+    } catch (error: unknown) {
+      showToast((error as Error).message || "Failed to update review");
     } finally {
       setReviewSubmitting(false);
     }
@@ -289,8 +289,8 @@ export default function ProductPage() {
         prev ? { ...prev, reviews: Math.max(0, prev.reviews - 1) } : null
       );
       showToast("Review deleted successfully!");
-    } catch (error: any) {
-      showToast(error.message || "Failed to delete review");
+    } catch (error: unknown) {
+      showToast((error as Error).message || "Failed to delete review");
     }
   };
 
@@ -1250,7 +1250,11 @@ export default function ProductPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() =>
+                    setActiveTab(
+                      tab.id as "description" | "reviews" | "specifications"
+                    )
+                  }
                   className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 transition-colors ${
                     activeTab === tab.id
                       ? "border-blue-500 text-blue-600"
@@ -1290,7 +1294,9 @@ export default function ProductPage() {
                             Key Features
                           </h4>
                           <ul className="space-y-2 text-sm text-gray-700">
-                            {(product as any).keyFeatures?.map(
+                            {(
+                              product as unknown as { keyFeatures?: string[] }
+                            ).keyFeatures?.map(
                               (feature: string, index: number) => (
                                 <li
                                   key={index}
@@ -1322,7 +1328,11 @@ export default function ProductPage() {
                             Care Instructions
                           </h4>
                           <ul className="space-y-2 text-sm text-gray-700">
-                            {(product as any).careInstructions?.map(
+                            {(
+                              product as unknown as {
+                                careInstructions?: string[];
+                              }
+                            ).careInstructions?.map(
                               (instruction: string, index: number) => (
                                 <li key={index}>• {instruction}</li>
                               )
@@ -1379,8 +1389,8 @@ export default function ProductPage() {
                               Material
                             </span>
                             <span className="text-gray-900">
-                              {(product as any).material ||
-                                "Premium Cotton Blend"}
+                              {(product as unknown as { material?: string })
+                                .material || "Premium Cotton Blend"}
                             </span>
                           </div>
                           <div className="flex justify-between py-2 border-b">
@@ -1388,7 +1398,8 @@ export default function ProductPage() {
                               Origin
                             </span>
                             <span className="text-gray-900">
-                              {(product as any).origin || "Made in India"}
+                              {(product as unknown as { origin?: string })
+                                .origin || "Made in India"}
                             </span>
                           </div>
                         </div>
@@ -1398,7 +1409,8 @@ export default function ProductPage() {
                               Weight
                             </span>
                             <span className="text-gray-900">
-                              {(product as any).weight || "250g"}
+                              {(product as unknown as { weight?: string })
+                                .weight || "250g"}
                             </span>
                           </div>
                           <div className="flex justify-between py-2 border-b">
@@ -1406,7 +1418,8 @@ export default function ProductPage() {
                               Warranty
                             </span>
                             <span className="text-gray-900">
-                              {(product as any).warranty || "1 Year"}
+                              {(product as unknown as { warranty?: string })
+                                .warranty || "1 Year"}
                             </span>
                           </div>
                           <div className="flex justify-between py-2 border-b">
@@ -1414,7 +1427,7 @@ export default function ProductPage() {
                               SKU
                             </span>
                             <span className="text-gray-900">
-                              {(product as any).sku ||
+                              {(product as unknown as { sku?: string }).sku ||
                                 `MF-${product.id || product._id}`}
                             </span>
                           </div>
@@ -1436,31 +1449,44 @@ export default function ProductPage() {
                       </div>
 
                       {/* Additional specifications from schema */}
-                      {(product as any).specifications &&
-                        (product as any).specifications.length > 0 && (
-                          <div className="mt-6">
-                            <h4 className="font-semibold text-gray-900 mb-3">
-                              Additional Details
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {(product as any).specifications.map(
-                                (spec: any, index: number) => (
-                                  <div
-                                    key={index}
-                                    className="flex justify-between py-2 border-b"
-                                  >
-                                    <span className="font-medium text-gray-700">
-                                      {spec.key}
-                                    </span>
-                                    <span className="text-gray-900">
-                                      {spec.value}
-                                    </span>
-                                  </div>
-                                )
-                              )}
+                      {(() => {
+                        const productSpecs = (
+                          product as unknown as { specifications?: unknown[] }
+                        ).specifications;
+                        return (
+                          productSpecs &&
+                          productSpecs.length > 0 && (
+                            <div className="mt-6">
+                              <h4 className="font-semibold text-gray-900 mb-3">
+                                Additional Details
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {productSpecs.map(
+                                  (spec: unknown, index: number) => {
+                                    const specData = spec as {
+                                      key?: string;
+                                      value?: string;
+                                    };
+                                    return (
+                                      <div
+                                        key={index}
+                                        className="flex justify-between py-2 border-b"
+                                      >
+                                        <span className="font-medium text-gray-700">
+                                          {specData.key}
+                                        </span>
+                                        <span className="text-gray-900">
+                                          {specData.value}
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -1900,7 +1926,8 @@ export default function ProductPage() {
             {/* Comment Below Image */}
             <div className="text-center mt-4">
               <p className="text-white text-sm opacity-90 max-w-2xl mx-auto">
-                "{allReviewImages[selectedImageIndex]?.reviewComment}"
+                &ldquo;{allReviewImages[selectedImageIndex]?.reviewComment}
+                &rdquo;
               </p>
             </div>
           </div>

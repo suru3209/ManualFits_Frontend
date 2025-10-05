@@ -150,7 +150,8 @@ export default function EditProfileSection({
           {profileImageUrl && (
             <div className="text-center mt-2">
               <p className="text-sm text-green-600">
-                ✓ New profile picture selected. Click "Save Changes" to update.
+                ✓ New profile picture selected. Click &ldquo;Save Changes&rdquo;
+                to update.
               </p>
             </div>
           )}

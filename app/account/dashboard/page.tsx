@@ -18,31 +18,32 @@ import {
   type CreateReviewData,
   type Review,
 } from "@/lib/reviewApi";
+import { CartItem } from "@/context/CartContext";
 import { uploadMultipleImages } from "@/lib/cloudinary";
-import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
 import {
   User,
-  Mail,
-  Phone,
-  Calendar,
-  MapPin,
+  // Mail,
+  // Phone,
+  // Calendar,
+  // MapPin,
   CreditCard,
   Gift,
   Edit3,
-  Camera,
+  // Camera,
   Settings,
   ShoppingBag,
   Star,
   Bell,
   LogOut,
-  Home,
+  // Home,
   MapPin as AddressIcon,
   CreditCard as CardIcon,
   Smartphone,
   Ticket,
   Trash,
   X,
-  MessageCircle,
+  // MessageCircle,
 } from "lucide-react";
 import {
   GiftCardsSection,
@@ -51,7 +52,7 @@ import {
 } from "@/components/payment";
 import DynamicBreadcrumb from "@/lib/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { SimpleProfileImageUpload } from "@/components/ui/SimpleProfileImageUpload";
+// import { SimpleProfileImageUpload } from "@/components/ui/SimpleProfileImageUpload";
 import {
   PersonalInfoSection,
   EditProfileSection,
@@ -59,15 +60,49 @@ import {
   MyOrdersSection,
   MyCartSection,
   CouponsSection,
-  ReviewsSection,
+  // ReviewsSection,
   NotificationsSection,
 } from "@/components/dashboard";
 
 interface Order {
-  id: string;
-  date: string;
-  total: number;
+  _id: string;
+  createdAt: string;
+  updatedAt?: string;
+  totalAmount: number;
+  paymentMethod: string;
   status: string;
+  items: Array<{
+    product: {
+      _id?: string;
+      id?: string;
+      name: string;
+      images: string[];
+    };
+    quantity: number;
+    price: number;
+  }>;
+  shippingAddress: {
+    name: string;
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+    phone: string;
+  };
+}
+
+interface Address {
+  address_id: string;
+  type: string;
+  name: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  is_default: boolean;
 }
 
 interface UserData {
@@ -79,18 +114,7 @@ interface UserData {
   cloudinaryPublicId?: string;
   dob: string;
   gender: "Male" | "Female" | "Other";
-  addresses: Array<{
-    address_id: string;
-    type: string;
-    name: string;
-    phone: string;
-    street: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-    is_default: boolean;
-  }>;
+  addresses: Array<Address>;
   saved_payments: {
     upi: Array<{
       upi_id: string;
@@ -118,25 +142,25 @@ interface UserData {
   created_at: string;
   updated_at: string;
 }
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+// import { Label } from "@/components/ui/label";
+// import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
+// import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
 
 export default function DashboardPage() {
   const { wishlist } = useWishlist();
   const { showToast } = useToast();
   const [user, setUser] = useState<UserData | null>(null);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string>("");
   const [activeSection, setActiveSection] = useState("personal-info");
-  const [userAddresses, setUserAddresses] = useState<any[]>([]);
+  const [userAddresses, setUserAddresses] = useState<Address[]>([]);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [profileImageUrl, setProfileImageUrl] = useState<string>("");
   const [profileImagePublicId, setProfileImagePublicId] = useState<string>("");
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<any>(null);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressForm, setAddressForm] = useState({
     name: "",
     phone: "",
@@ -148,10 +172,10 @@ export default function DashboardPage() {
     type: "Home",
     is_default: false,
   });
-  const [userOrders, setUserOrders] = useState<any[]>([]);
-  const [userCart, setUserCart] = useState<any[]>([]);
-  const [userCoupons, setUserCoupons] = useState<any[]>([]);
-  const [userNotifications, setUserNotifications] = useState<any[]>([]);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [userCart, setUserCart] = useState<CartItem[]>([]);
+  // const [, setUserCoupons] = useState<unknown[]>([]);
+  // const [, setUserNotifications] = useState<unknown[]>([]);
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -159,7 +183,8 @@ export default function DashboardPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [orderActionMessage, setOrderActionMessage] = useState<string>("");
   const [showTrackPopup, setShowTrackPopup] = useState(false);
-  const [selectedOrderForTrack, setSelectedOrderForTrack] = useState<any>(null);
+  const [selectedOrderForTrack, setSelectedOrderForTrack] =
+    useState<Order | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   // Review modal state
@@ -172,11 +197,13 @@ export default function DashboardPage() {
     comment: "",
     images: [] as string[],
   });
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [, setUploadedImages] = useState<string[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [orderReviews, setOrderReviews] = useState<Map<string, any>>(new Map());
+  const [orderReviews, setOrderReviews] = useState<Map<string, unknown>>(
+    new Map()
+  );
   const [userReviews, setUserReviews] = useState<Review[]>([]);
   const [loadingUserReviews, setLoadingUserReviews] = useState(false);
 
@@ -249,7 +276,7 @@ export default function DashboardPage() {
   };
 
   // Load existing reviews for delivered orders
-  const loadExistingReviews = async (orders: unknown[]) => {
+  const loadExistingReviews = async (orders: Order[]) => {
     if (!orders || orders.length === 0) return;
 
     console.log("🔍 Loading existing reviews for orders:", orders.length);
@@ -259,19 +286,17 @@ export default function DashboardPage() {
       // Since /api/reviews/user doesn't exist, we'll check each product individually
       // This is not ideal but works with existing backend
       for (const order of orders) {
-        const orderData = order as any;
-        if (orderData.status === "delivered" && orderData.items) {
+        if (order.status === "delivered") {
           // Check if any product in this order has been reviewed
-          for (const item of orderData.items) {
-            const itemData = item as any;
-            const productId = itemData.product._id || itemData.product.id;
+          for (const item of order.items) {
+            const productId = item.product?._id || item.product?.id;
             if (productId) {
               try {
                 // Use the existing checkUserHasReviewed function
                 const reviewStatus = await checkUserHasReviewed(productId);
                 if (reviewStatus.hasReviewed && reviewStatus.review) {
-                  reviewsMap.set(orderData._id, reviewStatus.review);
-                  console.log("🔍 Order has review:", orderData._id);
+                  reviewsMap.set(order._id, reviewStatus.review);
+                  console.log("🔍 Order has review:", order._id);
                   break; // One review per order, so we can break after finding one
                 }
               } catch (error) {
@@ -552,7 +577,7 @@ export default function DashboardPage() {
   };
 
   // Handle track order
-  const handleTrackOrder = (order: unknown) => {
+  const handleTrackOrder = (order: Order) => {
     setSelectedOrderForTrack(order);
     setShowTrackPopup(true);
   };
@@ -560,8 +585,10 @@ export default function DashboardPage() {
   // Review handlers - One review per order
   const handleWriteReview = async (orderId: string, orderItems: unknown[]) => {
     // For one review per order, we'll use the first product in the order
-    const firstProduct = orderItems[0] as any;
-    const productId = firstProduct.product._id || firstProduct.product.id;
+    const firstProduct = orderItems[0] as Order["items"][0];
+    if (!firstProduct) return;
+
+    const productId = firstProduct.product._id || firstProduct.product.id || "";
     const productName = firstProduct.product.name;
 
     setReviewProductId(productId);
@@ -637,15 +664,11 @@ export default function DashboardPage() {
           setUserReviews((prev) => [newReviewData, ...prev]);
 
           // Find the order ID for this product and mark the order as reviewed
-          const orderId = userOrders.find((order) =>
-            order.items.some((item: unknown) => {
-              const itemData = item as any;
-              return (
-                (itemData.product._id || itemData.product.id) ===
-                reviewProductId
-              );
-            })
-          )?._id;
+          const orderId = userOrders.find((order) => {
+            return order.items.some((item) => {
+              return (item.product._id || item.product.id) === reviewProductId;
+            });
+          })?._id;
 
           if (orderId) {
             // Update the order reviews map
@@ -766,7 +789,7 @@ export default function DashboardPage() {
       const allReviews: Review[] = [];
 
       for (const order of userOrders) {
-        if (order.status === "delivered" && order.items) {
+        if (order.status === "delivered") {
           for (const item of order.items) {
             const productId = item.product._id || item.product.id;
             if (productId) {
@@ -868,11 +891,12 @@ export default function DashboardPage() {
   };
 
   // Check if order is within 5-day return window
-  const isWithinReturnWindow = (order: unknown) => {
-    const orderData = order as any;
-    if (orderData.status !== "delivered") return false;
+  const isWithinReturnWindow = (order: Order) => {
+    if (order.status !== "delivered") return false;
 
-    const deliveredDate = new Date(orderData.updatedAt || orderData.createdAt);
+    const deliveredDate = new Date(
+      order.updatedAt || order.createdAt || new Date()
+    );
     const currentDate = new Date();
     const daysDifference = Math.floor(
       (currentDate.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -1056,19 +1080,18 @@ export default function DashboardPage() {
   };
 
   // Handle edit address
-  const handleEditAddress = (address: unknown) => {
-    const addressData = address as any;
+  const handleEditAddress = (address: Address) => {
     setEditingAddress(address);
     setAddressForm({
-      name: addressData.name || "",
-      phone: addressData.phone || "",
-      street: addressData.street || "",
-      city: addressData.city || "",
-      state: addressData.state || "",
-      zip: addressData.zip || "",
-      country: addressData.country || "",
-      type: addressData.type || "Home",
-      is_default: addressData.is_default || false,
+      name: address.name || "",
+      phone: address.phone || "",
+      street: address.street || "",
+      city: address.city || "",
+      state: address.state || "",
+      zip: address.zip || "",
+      country: address.country || "",
+      type: address.type || "Home",
+      is_default: address.is_default || false,
     });
     setShowAddAddressForm(true);
   };
@@ -1076,6 +1099,11 @@ export default function DashboardPage() {
   // Handle update address
   const handleUpdateAddress = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingAddress) {
+      console.error("No address selected for editing");
+      return;
+    }
+
     try {
       const token = safeLocalStorage.getItem("token");
       console.log("Dashboard - Updating address with data:", addressForm);

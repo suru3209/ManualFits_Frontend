@@ -30,7 +30,7 @@ interface User {
   image?: string;
   gender?: string;
   created_at: string;
-  addresses: any[];
+  addresses: unknown[];
 }
 
 interface UsersResponse {

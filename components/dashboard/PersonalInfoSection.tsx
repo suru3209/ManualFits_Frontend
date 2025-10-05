@@ -17,9 +17,9 @@ interface UserData {
 
 interface PersonalInfoSectionProps {
   user: UserData;
-  userOrders: any[];
-  userWishlists: any[];
-  userCart: any[];
+  userOrders: unknown[];
+  userWishlists: unknown[];
+  userCart: unknown[];
   onEditProfile: () => void;
 }
 

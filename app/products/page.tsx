@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { Product } from "../../types/types";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -22,9 +22,9 @@ async function fetchProducts(): Promise<Product[]> {
   return Array.isArray(json) ? json : json.data ?? [];
 }
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const { addToCart, cartItems } = useCart();
-  const router = useRouter();
+  // const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -209,12 +209,17 @@ export default function ProductsPage() {
     const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
-    const stableId = (product as any)._id ?? product.id;
+    const stableId = (product as unknown as { _id?: string })._id ?? product.id;
     const isWishlisted = wishlist.some(
-      (p) => ((p as any)._id ?? p.id) === stableId
+      (p) => ((p as unknown as { _id?: string })._id ?? p.id) === stableId
     );
     const addedToCart = useMemo(
-      () => cartItems.some((i: any) => ((i as any)._id ?? i.id) === stableId),
+      () =>
+        cartItems.some(
+          (i: unknown) =>
+            ((i as unknown as { _id?: string })._id ??
+              (i as unknown as { id?: string }).id) === stableId
+        ),
       [cartItems, stableId]
     );
 
@@ -504,7 +509,9 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {filteredProducts.map((product) => (
                   <ProductCard
-                    key={(product as any)._id ?? product.id}
+                    key={
+                      (product as unknown as { _id?: string })._id ?? product.id
+                    }
                     product={product}
                   />
                 ))}
@@ -668,5 +675,28 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function ProductsPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Loading products...</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<ProductsPageLoading />}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

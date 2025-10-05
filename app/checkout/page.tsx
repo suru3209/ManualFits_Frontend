@@ -6,23 +6,53 @@ import { safeLocalStorage } from "@/lib/storage";
 import { cardApi, upiApi } from "@/lib/paymentApi";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import DynamicBreadcrumb from "@/lib/breadcrumb";
+
+interface CheckoutAddress {
+  address_id: string;
+  name: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  type: string;
+  is_default: boolean;
+}
+
+interface CheckoutCard {
+  card_id: string;
+  card_type: string;
+  brand: string;
+  last4: string;
+  expiry_month: number;
+  expiry_year: number;
+  cardholder_name: string;
+  is_default: boolean;
+}
+
+interface CheckoutUPI {
+  upi_id: string;
+  name: string;
+  is_default: boolean;
+}
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  // const router = useRouter();
 
   // All state hooks must be declared before any conditional returns
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<CheckoutAddress[]>([]);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [editingAddress, setEditingAddress] = useState<string | null>(null);
-  const [savedCards, setSavedCards] = useState<any[]>([]);
-  const [savedUPI, setSavedUPI] = useState<any[]>([]);
+  const [savedCards, setSavedCards] = useState<CheckoutCard[]>([]);
+  const [savedUPI, setSavedUPI] = useState<CheckoutUPI[]>([]);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedUPI, setSelectedUPI] = useState<string | null>(null);
   const [showNewCardForm, setShowNewCardForm] = useState(false);
@@ -80,7 +110,10 @@ export default function CheckoutPage() {
         setSavedAddresses(addresses);
 
         // Set default address as selected and filter to show only default
-        const defaultAddress = addresses.find((addr: any) => addr.is_default);
+        const defaultAddress = addresses.find(
+          (addr: unknown) =>
+            (addr as unknown as { is_default?: boolean }).is_default
+        );
         if (defaultAddress) {
           setSelectedAddress(defaultAddress.address_id);
           // Show only the default address
@@ -108,7 +141,10 @@ export default function CheckoutPage() {
       setSavedCards(cards);
 
       // Set default card as selected and filter to show only default
-      const defaultCard = cards.find((card: any) => card.is_default);
+      const defaultCard = cards.find(
+        (card: unknown) =>
+          (card as unknown as { is_default?: boolean }).is_default
+      );
       if (defaultCard) {
         setSelectedCard(defaultCard.card_id);
         // Show only the default card
@@ -130,7 +166,10 @@ export default function CheckoutPage() {
       setSavedUPI(upiList);
 
       // Set default UPI as selected and filter to show only default
-      const defaultUPI = upiList.find((upi: any) => upi.is_default);
+      const defaultUPI = upiList.find(
+        (upi: unknown) =>
+          (upi as unknown as { is_default?: boolean }).is_default
+      );
       if (defaultUPI) {
         setSelectedUPI(defaultUPI.upi_id);
         // Show only the default UPI
@@ -391,15 +430,17 @@ export default function CheckoutPage() {
         const selectedAddr = savedAddresses.find(
           (addr) => addr.address_id === selectedAddress
         );
-        shippingAddress = {
-          name: selectedAddr.name,
-          phone: selectedAddr.phone,
-          street: selectedAddr.street,
-          city: selectedAddr.city,
-          state: selectedAddr.state,
-          zip: selectedAddr.zip,
-          country: selectedAddr.country,
-        };
+        if (selectedAddr) {
+          shippingAddress = {
+            name: selectedAddr.name,
+            phone: selectedAddr.phone,
+            street: selectedAddr.street,
+            city: selectedAddr.city,
+            state: selectedAddr.state,
+            zip: selectedAddr.zip,
+            country: selectedAddr.country,
+          };
+        }
       }
 
       // Prepare order data according to backend API
@@ -469,21 +510,21 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const addressUsed =
-      selectedAddress !== null
-        ? savedAddresses.find((addr) => addr.id === selectedAddress)
-        : formData;
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   const addressUsed =
+  //     selectedAddress !== null
+  //       ? savedAddresses.find((addr) => addr.id === selectedAddress)
+  //       : formData;
 
-    alert(
-      `✅ Order placed successfully!\n\nAddress:\n${JSON.stringify(
-        addressUsed,
-        null,
-        2
-      )}`
-    );
-  };
+  //   alert(
+  //     `✅ Order placed successfully!\n\nAddress:\n${JSON.stringify(
+  //       addressUsed,
+  //       null,
+  //       2
+  //     )}`
+  //   );
+  // };
 
   return (
     <div className="mx-auto p-5 lg:p-20 pt-15 bg-gray-300">

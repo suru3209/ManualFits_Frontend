@@ -9,7 +9,7 @@ import { X, Upload, User, Camera } from "lucide-react";
 
 interface ProfileImageUploadProps {
   onUpload: (url: string, publicId: string) => void;
-  onUpdate?: (user: any) => void; // Callback for when profile is updated
+  onUpdate?: (user: unknown) => void; // Callback for when profile is updated
   token: string;
   existingImage?: string;
   size?: "sm" | "md" | "lg";

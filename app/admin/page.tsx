@@ -36,6 +36,15 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+interface AdminOrder {
+  _id: string;
+  totalAmount: number;
+  status: string;
+  user?: {
+    username: string;
+  };
+}
+
 interface DashboardStats {
   totalUsers: number;
   totalProducts: number;
@@ -44,7 +53,7 @@ interface DashboardStats {
   pendingOrders: number;
   completedOrders: number;
   totalRevenue: number;
-  recentOrders: any[];
+  recentOrders: AdminOrder[];
 }
 
 interface AdminInfo {
@@ -319,43 +328,47 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {stats?.recentOrders
                     ?.slice(0, 5)
-                    .map((order: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <ShoppingBag className="w-5 h-5 text-purple-600" />
+                    .map((order: AdminOrder, index: number) => {
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                              <ShoppingBag className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">
+                                Order #{order._id?.slice(-8) || "N/A"}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {order.user?.username || "Unknown User"}
+                              </p>
+                            </div>
                           </div>
-                          <div>
+                          <div className="text-right">
                             <p className="font-medium">
-                              Order #{order._id.slice(-8)}
+                              ₹{order.totalAmount || 0}
                             </p>
-                            <p className="text-sm text-gray-500">
-                              {order.user?.username || "Unknown User"}
-                            </p>
+                            <Badge
+                              variant={
+                                order.status === "delivered"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className={
+                                order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : ""
+                              }
+                            >
+                              {order.status || "Unknown"}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">₹{order.totalAmount}</p>
-                          <Badge
-                            variant={
-                              order.status === "delivered"
-                                ? "default"
-                                : "secondary"
-                            }
-                            className={
-                              order.status === "delivered"
-                                ? "bg-green-100 text-green-800"
-                                : ""
-                            }
-                          >
-                            {order.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </CardContent>
             </Card>

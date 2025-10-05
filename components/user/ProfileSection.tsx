@@ -145,7 +145,17 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
           <CardContent>
             <div className="space-y-4">
               {user.addresses.map((address: unknown, index: number) => {
-                const addressData = address as any;
+                const addressData = address as {
+                  name: string;
+                  type: string;
+                  street: string;
+                  city: string;
+                  state: string;
+                  zip: string;
+                  country: string;
+                  phone: string;
+                  is_default: boolean;
+                };
                 return (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">

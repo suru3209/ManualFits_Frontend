@@ -52,7 +52,8 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="flex-1 bg-gray-50 min-h-100 shadow-md rounded-lg p-4 space-y-3">
           {cartItems.map((item: Product & { qty: number }) => {
-            const stableId = (item as any)._id ?? item.id;
+            const stableId =
+              (item as unknown as { _id?: string })._id ?? item.id;
             return (
               <div
                 key={stableId}

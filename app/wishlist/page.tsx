@@ -12,7 +12,7 @@ import Link from "next/link";
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
-  const router = useRouter();
+  // const router = useRouter();
 
   if (wishlist.length === 0) {
     return (
@@ -39,7 +39,8 @@ export default function WishlistPage() {
       <DynamicBreadcrumb />
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {wishlist.map((product) => {
-          const stableId = (product as any)._id ?? product.id;
+          const stableId =
+            (product as unknown as { _id?: string })._id ?? product.id;
           return (
             <Card
               key={stableId}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -11,20 +11,20 @@ import DynamicBreadcrumb from "@/lib/breadcrumb";
 import { buildApiUrl } from "@/lib/api";
 
 // Fetch products from backend
-async function fetchProducts(): Promise<any[]> {
+async function fetchProducts(): Promise<unknown[]> {
   const res = await fetch(buildApiUrl("/products"), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch products");
   const json = await res.json();
   return Array.isArray(json) ? json : json.data ?? [];
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const { addToCart, cartItems } = useCart();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<unknown[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -89,19 +89,34 @@ export default function SearchPage() {
     console.log("Search Query:", query);
     console.log("Total Products:", products.length);
 
-    const filtered = products.filter((product: any) => {
+    const filtered = products.filter((product: unknown) => {
+      const productData = product as {
+        name?: string;
+        brand?: string;
+        category?: string;
+        subcategory?: string;
+        tags?: string[];
+        sizes?: unknown[];
+        sku?: string;
+        description?: string;
+        price?: number;
+        colors?: string[];
+        discount?: number;
+      };
       // Search query filter
       if (query) {
         const q = query.toLowerCase();
-        const inName = product.name?.toLowerCase().includes(q);
-        const inBrand = product.brand?.toLowerCase().includes(q);
-        const inCategory = product.category?.toLowerCase().includes(q); // changed to includes for better search
-        const inSubcategory = product.subcategory?.toLowerCase().includes(q);
-        const inTags = product.tags?.some((t: string) =>
+        const inName = productData.name?.toLowerCase().includes(q);
+        const inBrand = productData.brand?.toLowerCase().includes(q);
+        const inCategory = productData.category?.toLowerCase().includes(q); // changed to includes for better search
+        const inSubcategory = productData.subcategory
+          ?.toLowerCase()
+          .includes(q);
+        const inTags = productData.tags?.some((t: string) =>
           t.toLowerCase().includes(q)
         );
-        const inSku = product.sku?.toLowerCase().includes(q);
-        const inDesc = product.description?.toLowerCase().includes(q);
+        const inSku = productData.sku?.toLowerCase().includes(q);
+        const inDesc = productData.description?.toLowerCase().includes(q);
 
         const matches =
           inName ||
@@ -113,7 +128,7 @@ export default function SearchPage() {
           inDesc;
 
         if (matches) {
-          console.log("Product matches:", product.name, {
+          console.log("Product matches:", productData.name, {
             inName,
             inBrand,
             inCategory,
@@ -130,34 +145,44 @@ export default function SearchPage() {
       }
 
       // Price filter
-      if (product.price < priceRange[0] || product.price > priceRange[1])
+      if (
+        productData.price &&
+        (productData.price < priceRange[0] || productData.price > priceRange[1])
+      )
         return false;
 
       // Category filter
       if (
         selectedCategories.length > 0 &&
-        !selectedCategories.includes(product.category)
+        productData.category &&
+        !selectedCategories.includes(productData.category)
       )
         return false;
 
       // Color filter
       if (
         selectedColors.length > 0 &&
-        !product.colors.some((c: string) => selectedColors.includes(c))
+        productData.colors &&
+        !productData.colors.some((c: string) => selectedColors.includes(c))
       )
         return false;
 
       // Size filter
       if (
         selectedSizes.length > 0 &&
-        !product.sizes.some((s: any) => selectedSizes.includes(s.size))
+        productData.sizes &&
+        !productData.sizes.some((s: unknown) => {
+          const sizeData = s as { size?: string };
+          return sizeData.size && selectedSizes.includes(sizeData.size);
+        })
       )
         return false;
 
       // Discount filter
       if (
         selectedDiscounts.length > 0 &&
-        !selectedDiscounts.some((d) => product.discount >= d)
+        productData.discount !== undefined &&
+        !selectedDiscounts.some((d) => productData.discount! >= d)
       )
         return false;
 
@@ -185,12 +210,17 @@ export default function SearchPage() {
 
   const ProductCard = ({ product }: { product: Product }) => {
     const [isHovered, setIsHovered] = useState(false);
-    const stableId = (product as any)._id ?? product.id;
+    const stableId = (product as unknown as { _id?: string })._id ?? product.id;
     const isWishlisteed = wishlist.some(
-      (p) => ((p as any)._id ?? p.id) === stableId
+      (p) => ((p as unknown as { _id?: string })._id ?? p.id) === stableId
     );
     const addedToCart = useMemo(
-      () => cartItems.some((i: any) => ((i as any)._id ?? i.id) === stableId),
+      () =>
+        cartItems.some(
+          (i: unknown) =>
+            ((i as unknown as { _id?: string })._id ??
+              (i as unknown as { id?: string }).id) === stableId
+        ),
       [cartItems, stableId]
     );
 
@@ -294,7 +324,7 @@ export default function SearchPage() {
           <div className="text-center mb-6">
             <p className="text-gray-700 text-lg">
               Showing {filteredProducts.length} results for:{" "}
-              <span className="font-semibold">"{query}"</span>
+              <span className="font-semibold">&ldquo;{query}&rdquo;</span>
             </p>
           </div>
         )}
@@ -432,12 +462,15 @@ export default function SearchPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={(product as any)._id ?? product.id}
-                    product={product}
-                  />
-                ))}
+                {filteredProducts.map((product) => {
+                  const productData = product as { _id?: string; id?: string };
+                  return (
+                    <ProductCard
+                      key={productData._id ?? productData.id ?? Math.random()}
+                      product={product as Product}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
@@ -580,5 +613,28 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function SearchPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Loading search results...</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchPageLoading />}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
