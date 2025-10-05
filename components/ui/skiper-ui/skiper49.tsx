@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import React from "react";
+import Image from "next/image";
 import {
   Autoplay,
   EffectCoverflow,
@@ -170,10 +171,12 @@ const Carousel_003 = ({
         >
           {images.map((image, index) => (
             <SwiperSlide key={index} className="">
-              <img
+              <Image
                 className="h-full w-full object-cover"
                 src={image.src}
                 alt={image.alt}
+                width={800}
+                height={600}
               />
             </SwiperSlide>
           ))}

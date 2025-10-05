@@ -56,8 +56,8 @@ export function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     if (segment.match(/^[a-f\d]{24}$/) || !isNaN(Number(segment))) {
       // This is likely a product ID or similar dynamic segment
       const parentPath = currentPath.substring(0, currentPath.lastIndexOf("/"));
-      const parentLabel =
-        routeLabels[parentPath] || parentPath.split("/").pop() || segment;
+      // const parentLabel =
+      //   routeLabels[parentPath] || parentPath.split("/").pop() || segment;
 
       // For product pages, show a more user-friendly label
       if (parentPath === "/products") {
@@ -100,8 +100,8 @@ export default function DynamicBreadcrumb() {
   }
 
   const breadcrumbItems = getBreadcrumbItems(pathname);
-  const currentPageLabel =
-    breadcrumbItems[breadcrumbItems.length - 1]?.label || "Page";
+  // const currentPageLabel =
+  //   breadcrumbItems[breadcrumbItems.length - 1]?.label || "Page";
 
   const handleBackClick = () => {
     router.back();

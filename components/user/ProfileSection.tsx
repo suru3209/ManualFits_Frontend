@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ProfileImageUpload } from "@/components/ui/ProfileImageUpload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { User, Mail, Phone, Calendar, MapPin } from "lucide-react";
 
 interface ProfileSectionProps {
@@ -16,12 +16,12 @@ interface ProfileSectionProps {
     cloudinaryPublicId?: string;
     dob?: string;
     gender?: string;
-    addresses: any[];
+    addresses: unknown[];
     created_at: string;
     updated_at: string;
   };
   token: string;
-  onUserUpdate: (updatedUser: any) => void;
+  onUserUpdate: (updatedUser: unknown) => void;
 }
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({
@@ -29,7 +29,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
   token,
   onUserUpdate,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [, setIsEditing] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -44,7 +44,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
     console.log("Image updated:", { url, publicId });
   };
 
-  const handleProfileUpdate = (updatedUser: any) => {
+  const handleProfileUpdate = (updatedUser: unknown) => {
     onUserUpdate(updatedUser);
     setIsEditing(false);
   };
@@ -144,26 +144,33 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {user.addresses.map((address: any, index: number) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-medium">{address.name}</h4>
-                      <p className="text-sm text-gray-600">{address.type}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {address.street}, {address.city}, {address.state}{" "}
-                        {address.zip}
-                      </p>
-                      <p className="text-sm text-gray-500">{address.country}</p>
+              {user.addresses.map((address: unknown, index: number) => {
+                const addressData = address as any;
+                return (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium">{addressData.name}</h4>
+                        <p className="text-sm text-gray-600">
+                          {addressData.type}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {addressData.street}, {addressData.city},{" "}
+                          {addressData.state} {addressData.zip}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {addressData.country}
+                        </p>
+                      </div>
+                      {addressData.is_default && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          Default
+                        </span>
+                      )}
                     </div>
-                    {address.is_default && (
-                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                        Default
-                      </span>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

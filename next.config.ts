@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["images.unsplash.com"], // ✅ unsplash allow kiya
+    domains: [
+      "images.unsplash.com",
+      "plus.unsplash.com",
+      "images.pexels.com",
+      "pbs.twimg.com",
+      "res.cloudinary.com",
+    ], // ✅ external image domains
   },
 };
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { safeLocalStorage } from "@/lib/storage";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import { useWishlist } from "@/context/WishlistContext";
@@ -248,30 +249,29 @@ export default function DashboardPage() {
   };
 
   // Load existing reviews for delivered orders
-  const loadExistingReviews = async (orders: any[]) => {
+  const loadExistingReviews = async (orders: unknown[]) => {
     if (!orders || orders.length === 0) return;
 
     console.log("🔍 Loading existing reviews for orders:", orders.length);
-    const reviewsMap = new Map<string, any>();
+    const reviewsMap = new Map<string, unknown>();
 
     try {
       // Since /api/reviews/user doesn't exist, we'll check each product individually
       // This is not ideal but works with existing backend
       for (const order of orders) {
-        if (order.status === "delivered" && order.items) {
-          let orderHasReview = false;
-
+        const orderData = order as any;
+        if (orderData.status === "delivered" && orderData.items) {
           // Check if any product in this order has been reviewed
-          for (const item of order.items) {
-            const productId = item.product._id || item.product.id;
+          for (const item of orderData.items) {
+            const itemData = item as any;
+            const productId = itemData.product._id || itemData.product.id;
             if (productId) {
               try {
                 // Use the existing checkUserHasReviewed function
                 const reviewStatus = await checkUserHasReviewed(productId);
                 if (reviewStatus.hasReviewed && reviewStatus.review) {
-                  orderHasReview = true;
-                  reviewsMap.set(order._id, reviewStatus.review);
-                  console.log("🔍 Order has review:", order._id);
+                  reviewsMap.set(orderData._id, reviewStatus.review);
+                  console.log("🔍 Order has review:", orderData._id);
                   break; // One review per order, so we can break after finding one
                 }
               } catch (error) {
@@ -552,15 +552,15 @@ export default function DashboardPage() {
   };
 
   // Handle track order
-  const handleTrackOrder = (order: any) => {
+  const handleTrackOrder = (order: unknown) => {
     setSelectedOrderForTrack(order);
     setShowTrackPopup(true);
   };
 
   // Review handlers - One review per order
-  const handleWriteReview = async (orderId: string, orderItems: any[]) => {
+  const handleWriteReview = async (orderId: string, orderItems: unknown[]) => {
     // For one review per order, we'll use the first product in the order
-    const firstProduct = orderItems[0];
+    const firstProduct = orderItems[0] as any;
     const productId = firstProduct.product._id || firstProduct.product.id;
     const productName = firstProduct.product.name;
 
@@ -638,10 +638,13 @@ export default function DashboardPage() {
 
           // Find the order ID for this product and mark the order as reviewed
           const orderId = userOrders.find((order) =>
-            order.items.some(
-              (item: any) =>
-                (item.product._id || item.product.id) === reviewProductId
-            )
+            order.items.some((item: unknown) => {
+              const itemData = item as any;
+              return (
+                (itemData.product._id || itemData.product.id) ===
+                reviewProductId
+              );
+            })
           )?._id;
 
           if (orderId) {
@@ -656,8 +659,8 @@ export default function DashboardPage() {
           showToast("Review submitted successfully!");
         }
       }
-    } catch (error: any) {
-      showToast(error.message || "Failed to submit review");
+    } catch (error: unknown) {
+      showToast((error as Error).message || "Failed to submit review");
     } finally {
       setReviewSubmitting(false);
     }
@@ -803,8 +806,8 @@ export default function DashboardPage() {
         prev.filter((review) => review._id !== reviewId)
       );
       showToast("Review deleted successfully");
-    } catch (error: any) {
-      showToast(error.message || "Failed to delete review");
+    } catch (error: unknown) {
+      showToast((error as Error).message || "Failed to delete review");
     }
   };
 
@@ -816,11 +819,13 @@ export default function DashboardPage() {
     // Set the product ID for the review being edited
     const productId =
       typeof review.product === "object" && review.product !== null
-        ? (review.product as any)?._id || (review.product as any)?.id || ""
+        ? (review.product as { _id?: string; id?: string })?._id ||
+          (review.product as { _id?: string; id?: string })?.id ||
+          ""
         : (review.product as string) || "";
     const productName =
       typeof review.product === "object" && review.product !== null
-        ? (review.product as any)?.name || "Product"
+        ? (review.product as { name?: string })?.name || "Product"
         : "Product";
     console.log("Setting product ID:", productId, "Product name:", productName);
     setReviewProductId(productId);
@@ -863,10 +868,11 @@ export default function DashboardPage() {
   };
 
   // Check if order is within 5-day return window
-  const isWithinReturnWindow = (order: any) => {
-    if (order.status !== "delivered") return false;
+  const isWithinReturnWindow = (order: unknown) => {
+    const orderData = order as any;
+    if (orderData.status !== "delivered") return false;
 
-    const deliveredDate = new Date(order.updatedAt || order.createdAt);
+    const deliveredDate = new Date(orderData.updatedAt || orderData.createdAt);
     const currentDate = new Date();
     const daysDifference = Math.floor(
       (currentDate.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -978,27 +984,6 @@ export default function DashboardPage() {
     window.location.reload();
   };
 
-  const handleAddToken = () => {
-    if (!user) {
-      alert("User not found. Please login again.");
-      return;
-    }
-
-    try {
-      const testToken = jwt.sign(
-        { id: user._id, email: user.email },
-        "your-secret-key-here",
-        { expiresIn: "7d" }
-      );
-      safeLocalStorage.setItem("token", testToken);
-      console.log("Manual token added:", testToken);
-      alert("Token added! Please refresh the page.");
-    } catch (error) {
-      console.error("Error generating token:", error);
-      alert("Error generating token. Please try again.");
-    }
-  };
-
   const handleSetDefaultAddress = async (addressId: string) => {
     try {
       const token = safeLocalStorage.getItem("token");
@@ -1071,18 +1056,19 @@ export default function DashboardPage() {
   };
 
   // Handle edit address
-  const handleEditAddress = (address: any) => {
+  const handleEditAddress = (address: unknown) => {
+    const addressData = address as any;
     setEditingAddress(address);
     setAddressForm({
-      name: address.name || "",
-      phone: address.phone || "",
-      street: address.street || "",
-      city: address.city || "",
-      state: address.state || "",
-      zip: address.zip || "",
-      country: address.country || "",
-      type: address.type || "Home",
-      is_default: address.is_default || false,
+      name: addressData.name || "",
+      phone: addressData.phone || "",
+      street: addressData.street || "",
+      city: addressData.city || "",
+      state: addressData.state || "",
+      zip: addressData.zip || "",
+      country: addressData.country || "",
+      type: addressData.type || "Home",
+      is_default: addressData.is_default || false,
     });
     setShowAddAddressForm(true);
   };
@@ -1201,15 +1187,31 @@ export default function DashboardPage() {
             {/* User Profile */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-3 sm:space-y-0 sm:space-x-4 mb-6 pb-4 border-b">
               <div className="w-16 h-16 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {/* user.image ?  */}
-                <img
-                  src={user.image}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-                {/* // ) : (
-              //   <User className="w-6 h-6 text-gray-400" />
-              // )} */}
+                {user.image && user.image.trim() !== "" ? (
+                  <Image
+                    src={user.image}
+                    alt="Profile"
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-6 h-6 text-gray-400 flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                )}
               </div>
               <div className="text-center sm:text-left">
                 <h3 className="font-semibold text-gray-900 text-lg sm:text-base">
@@ -1662,9 +1664,11 @@ export default function DashboardPage() {
                                     key={index}
                                     className="relative group cursor-pointer"
                                   >
-                                    <img
+                                    <Image
                                       src={image}
                                       alt={`Review image ${index + 1}`}
+                                      width={64}
+                                      height={64}
                                       className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
                                       onError={(e) => {
                                         console.error(
@@ -2122,9 +2126,11 @@ export default function DashboardPage() {
                       <div className="flex gap-2 mt-2">
                         {newReview.images.map((image, index) => (
                           <div key={index} className="relative">
-                            <img
+                            <Image
                               src={image}
                               alt={`Review image ${index + 1}`}
+                              width={64}
+                              height={64}
                               className="w-16 h-16 object-cover rounded-lg"
                             />
                             <button

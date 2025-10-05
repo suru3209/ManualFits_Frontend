@@ -151,7 +151,7 @@ const SourceButton = ({ className }: { className?: string }) => {
       onClick={handleToggle}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <svg
@@ -219,7 +219,7 @@ const LockSourceButton = ({ className }: { className?: string }) => {
       onClick={handleToggle}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <button style={{ transformStyle: "preserve-3d", perspective: "500px" }}>
@@ -282,7 +282,7 @@ const InfoButton = ({ className }: { className?: string }) => {
       onClick={handleRotateY}
       className={cn(
         "text-foreground bg-foreground/5 group flex h-[30px] w-fit cursor-pointer items-center justify-center gap-2 self-end rounded-xl px-3 text-[13px] text-sm font-medium transition-all ease-in-out hover:opacity-60",
-        className,
+        className
       )}
     >
       <motion.span animate={rotateY}>
@@ -308,7 +308,7 @@ const LogoutIcon = ({ className }: { className?: string }) => {
       onClick={handleLogoutAnimate}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <svg
@@ -345,7 +345,7 @@ const DollerIcon = ({ className }: { className?: string }) => {
       onClick={handleToggle}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <motion.svg
@@ -392,7 +392,7 @@ const CopyIcon = ({
       onClick={handleCopyUsage}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <AnimatePresence mode="wait" initial={false}>
@@ -458,9 +458,7 @@ const MusicIcon = ({ className }: { className?: string }) => {
     let animationId: number;
     const animate = () => {
       frame.current += 1;
-      setHeights(
-        Array.from({ length: bars }, (_, i) => Math.random() * 0.8 + 0.2),
-      );
+      setHeights(Array.from({ length: bars }, () => Math.random() * 0.8 + 0.2));
       animationId = requestAnimationFrame(animate);
     };
     animate();
@@ -475,7 +473,7 @@ const MusicIcon = ({ className }: { className?: string }) => {
       tabIndex={0}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center gap-px",
-        className,
+        className
       )}
       role="button"
     >
@@ -506,20 +504,24 @@ const PlusIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsOpen((prev) => !prev)}
       className={cn(
         "relative flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <Plus
         strokeWidth={2}
         opacity={0.2}
         stroke="currentColor"
-        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${isOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"}`}
+        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${
+          isOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"
+        }`}
       />
       <Minus
         strokeWidth={2}
         opacity={0.2}
         stroke="currentColor"
-        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${isOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"}`}
+        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${
+          isOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"
+        }`}
       />
     </div>
   );
@@ -533,14 +535,14 @@ const HamMenuIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsHovered((x) => !x)}
       className={cn(
         "relative flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <motion.div
         transition={{ duration: 1, bounce: 0.6, type: "spring" }}
         className={cn(
           "text-foreground/50 relative flex size-4 h-fit cursor-pointer items-center justify-center gap-2 text-sm",
-          isHovered && "text-foreground",
+          isHovered && "text-foreground"
         )}
         // onMouseEnter={() => setIsHovered(true)}
       >
@@ -548,19 +550,19 @@ const HamMenuIcon = ({ className }: { className?: string }) => {
           <span
             className={cn(
               "bg-foreground h-[1.5px] w-4 rounded-3xl transition-all ease-in-out group-hover:w-2",
-              isHovered && "w-2",
+              isHovered && "w-2"
             )}
           />
           <span
             className={cn(
               "bg-foreground h-[1.5px] w-2 rounded-3xl transition-all ease-in-out group-hover:w-4",
-              isHovered && "w-4",
+              isHovered && "w-4"
             )}
           />
           <span
             className={cn(
               "bg-foreground h-[1.5px] w-3 rounded-3xl transition-all ease-in-out group-hover:w-2",
-              isHovered && "w-2",
+              isHovered && "w-2"
             )}
           />
         </div>
@@ -578,20 +580,24 @@ const ChevIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsOpen((prev) => !prev)}
       className={cn(
         "relative flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <ChevronDown
         strokeWidth={2}
         opacity={0.2}
         stroke="currentColor"
-        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${isOpen ? "-rotate-90 opacity-0" : "rotate-0 opacity-100"}`}
+        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${
+          isOpen ? "-rotate-90 opacity-0" : "rotate-0 opacity-100"
+        }`}
       />
       <ChevronUp
         strokeWidth={2}
         opacity={0.2}
         stroke="currentColor"
-        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${isOpen ? "rotate-0 opacity-100" : "rotate-90 opacity-0"}`}
+        className={`absolute size-[18px] shrink-0 cursor-pointer transition-all duration-200 sm:size-[22px] ${
+          isOpen ? "rotate-0 opacity-100" : "rotate-90 opacity-0"
+        }`}
       />
     </div>
   );
@@ -609,7 +615,7 @@ const MailIcon = ({ className }: { className?: string }) => {
       onClick={handleShake}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
       animate={isShaking ? { x: [0, -5, 5, -5, 5, 0] } : { x: 0 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -628,7 +634,7 @@ const WorldIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsClicked((prev) => !prev)}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <Globe
@@ -647,7 +653,7 @@ const FileIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsClicked((prev) => !prev)}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <svg
@@ -683,7 +689,7 @@ const TrashIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsClicked((prev) => !prev)}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <svg
@@ -755,7 +761,7 @@ const SendIcon = ({ className }: { className?: string }) => {
       onClick={handleClick}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center overflow-hidden",
-        className,
+        className
       )}
     >
       <motion.span animate={controls} style={{ willChange: "transform" }}>
@@ -791,13 +797,13 @@ const SpinnerIcon = ({
     <div
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <div
         className={cn(
           "relative flex items-center justify-center",
-          `h-[${size}px] w-[${size}px]`,
+          `h-[${size}px] w-[${size}px]`
         )}
         style={{ height: size, width: size }}
       >
@@ -827,7 +833,7 @@ const BellIcon = ({ className }: { className?: string }) => {
       onClick={() => setIsClicked((prev) => !prev)}
       className={cn(
         "flex size-full cursor-pointer items-center justify-center",
-        className,
+        className
       )}
     >
       <motion.div

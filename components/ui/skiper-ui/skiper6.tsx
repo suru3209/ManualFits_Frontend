@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { Heart } from "lucide-react";
@@ -54,13 +54,18 @@ export default function ProductPage() {
   const product = demoProducts.find((p) => p.id === Number(id));
 
   const { addToCart } = useCart();
-  const [selectedSize, setSelectedSize] = useState<string>(product?.size[0] || "");
-  const [selectedColor, setSelectedColor] = useState<string>(product?.color[0] || "");
+  const [selectedSize, setSelectedSize] = useState<string>(
+    product?.size[0] || ""
+  );
+  const [selectedColor, setSelectedColor] = useState<string>(
+    product?.color[0] || ""
+  );
   const [qty, setQty] = useState(1);
   const [wishlist, setWishlist] = useState(false);
   const [mainImage, setMainImage] = useState(product?.images[0]);
 
-  if (!product) return <div className="p-10 text-center text-xl">Product not found!</div>;
+  if (!product)
+    return <div className="p-10 text-center text-xl">Product not found!</div>;
 
   const handleAddToCart = () => {
     addToCart({
@@ -132,9 +137,15 @@ export default function ProductPage() {
           <p className="text-gray-500 mb-2">{product.brand}</p>
 
           <div className="flex items-center gap-4 mb-4">
-            <p className="text-2xl font-semibold text-blue-600">₹{product.price}</p>
-            <p className="text-gray-400 line-through">₹{product.originalPrice}</p>
-            <span className="text-green-600 font-medium">{product.discount}% off</span>
+            <p className="text-2xl font-semibold text-blue-600">
+              ₹{product.price}
+            </p>
+            <p className="text-gray-400 line-through">
+              ₹{product.originalPrice}
+            </p>
+            <span className="text-green-600 font-medium">
+              {product.discount}% off
+            </span>
           </div>
 
           <p className="mb-4 text-sm text-gray-600">
@@ -150,7 +161,9 @@ export default function ProductPage() {
                   key={s}
                   onClick={() => setSelectedSize(s)}
                   className={`px-4 py-2 border rounded ${
-                    selectedSize === s ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                    selectedSize === s
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-300"
                   }`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -170,7 +183,9 @@ export default function ProductPage() {
                   key={c}
                   onClick={() => setSelectedColor(c)}
                   className={`w-8 h-8 rounded-full border cursor-pointer ${
-                    selectedColor === c ? "ring-2 ring-blue-500" : "border-gray-300"
+                    selectedColor === c
+                      ? "ring-2 ring-blue-500"
+                      : "border-gray-300"
                   }`}
                   style={{ backgroundColor: c.toLowerCase() }}
                   whileHover={{ scale: 1.2 }}

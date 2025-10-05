@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "../../../context/CartContext";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 import {
@@ -32,14 +33,14 @@ type MenuContent = {
 
 type MenuData = Record<string, MenuContent>;
 
-// Helper function to create links
-const createLink = (text: string, basePath: string = "") => {
-  const path = text
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-  return `${basePath}/${path}`;
-};
+// Helper function to create links (currently unused)
+// const createLink = (text: string, basePath: string = "") => {
+//   const path = text
+//     .toLowerCase()
+//     .replace(/[^a-zA-Z0-9]+/g, "-")
+//     .replace(/(^-|-$)/g, "");
+//   return `${basePath}/${path}`;
+// };
 
 // Data
 const NAVIGATION_ITEMS = [
@@ -588,11 +589,9 @@ const AppleBag = () => (
 
 const MobileMenu = ({
   items,
-  isOpen,
   onCloseMenu,
 }: {
   items: typeof NAVIGATION_ITEMS;
-  isOpen: boolean;
   onCloseMenu: () => void;
 }) => (
   <div className="pt-15 h-screen w-screen bg-white backdrop-blur-2xl">
@@ -647,9 +646,14 @@ const AppleNavbar = () => {
   const searchRef = useRef<HTMLDivElement>(null);
 
   //login
-  const user =
-    typeof window !== "undefined" ? localStorage.getItem("user") : null;
-  const isLoggedIn = !!user;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+    const user = localStorage.getItem("user");
+    setIsLoggedIn(!!user);
+  }, []);
 
   const router = useRouter();
 
@@ -703,7 +707,13 @@ const AppleNavbar = () => {
             {/*  */}
             <Link href="/">
               {" "}
-              <img className="w-10 lg:w-12" src="/logo2.png" alt="" />
+              <Image
+                className="w-10 lg:w-12"
+                src="/logo2.png"
+                alt="Logo"
+                width={48}
+                height={48}
+              />
             </Link>
           </motion.li>
 
@@ -753,23 +763,31 @@ const AppleNavbar = () => {
               </div>
             </AppleIcon>
             <AppleIcon isMenuOpen={isMenuOpen}>
-              <Tooltip open={!isLoggedIn}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={isLoggedIn ? "/account/dashboard" : "/account/login"}
-                  >
-                    <CircleUser className="opacity-79" />
-                  </Link>
-                </TooltipTrigger>
-                {!isLoggedIn && (
-                  <TooltipContent
-                    side="bottom"
-                    className="bg-gray-800 text-white z-[9999]"
-                  >
-                    <p>Login & Signup</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
+              {isHydrated ? (
+                <Tooltip open={!isLoggedIn}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={
+                        isLoggedIn ? "/account/dashboard" : "/account/login"
+                      }
+                    >
+                      <CircleUser className="opacity-79" />
+                    </Link>
+                  </TooltipTrigger>
+                  {!isLoggedIn && (
+                    <TooltipContent
+                      side="bottom"
+                      className="bg-gray-800 text-white z-[9999]"
+                    >
+                      <p>Login & Signup</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              ) : (
+                <Link href="/account/login">
+                  <CircleUser className="opacity-79" />
+                </Link>
+              )}
             </AppleIcon>
             <AppleIcon isMenuOpen={isMenuOpen}>
               <Link href="/wishlist">
@@ -835,7 +853,6 @@ const AppleNavbar = () => {
           {isMenuOpen && (
             <MobileMenu
               items={NAVIGATION_ITEMS}
-              isOpen={isMenuOpen}
               onCloseMenu={() => setIsMenuOpen(false)}
             />
           )}
@@ -859,10 +876,12 @@ const Skiper38 = () => {
     <div className="relative h-full w-full bg-[#F2F2F4] text-black">
       <AppleNavbar />
       {/* Background Image */}
-      <img
+      <Image
         className="absolute left-0 h-[calc(100vh-1rem)] w-full rounded-2xl object-cover"
         src="https://pbs.twimg.com/media/GwY_Uc6bsAETDCF?format=jpg&name=4096x4096"
-        alt=""
+        alt="Background"
+        width={4096}
+        height={4096}
       />
     </div>
   );

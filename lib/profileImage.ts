@@ -12,7 +12,7 @@ export interface ProfileImageUpdateResponse {
     cloudinaryPublicId: string;
     dob?: string;
     gender?: string;
-    addresses: any[];
+    addresses: unknown[];
     created_at: string;
     updated_at: string;
   };
