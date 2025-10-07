@@ -1,9 +1,9 @@
 // Admin API utility functions
 export const getAdminApiBaseUrl = (): string => {
   if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://manualfits-env.eba-xrmesnme.us-east-1.elasticbeanstalk.com/";
   }
-  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://manualfits-env.eba-xrmesnme.us-east-1.elasticbeanstalk.com/";
 };
 
 // Admin API endpoints

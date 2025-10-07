@@ -3,11 +3,11 @@ export const getApiBaseUrl = (): string => {
   // Check if we're in development or production
   if (typeof window !== "undefined") {
     // Client-side: use environment variable or fallback
-    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://manualfits-env.eba-xrmesnme.us-east-1.elasticbeanstalk.com/";
   }
 
   // Server-side: use environment variable or fallback
-  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://manualfits-env.eba-xrmesnme.us-east-1.elasticbeanstalk.com/";
 };
 
 // API endpoints
