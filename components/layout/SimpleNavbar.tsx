@@ -64,22 +64,23 @@ export default function SimpleNavbar() {
               )}
             </button>
 
-            {/* Login/Profile Button - Hide Profile button on login page */}
-            {isLoggedIn && pathname !== "/account/login" ? (
-              <button
-                onClick={() => router.push("/account/dashboard")}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Profile
-              </button>
-            ) : !isLoggedIn ? (
-              <button
-                onClick={() => router.push("/account/login")}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Login
-              </button>
-            ) : null}
+            {/* Login/Profile Button - Hide on login page */}
+            {pathname !== "/account/login" &&
+              (isLoggedIn ? (
+                <button
+                  onClick={() => router.push("/account/dashboard")}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Profile
+                </button>
+              ) : (
+                <button
+                  onClick={() => router.push("/account/login")}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Login
+                </button>
+              ))}
           </div>
         </div>
       </div>

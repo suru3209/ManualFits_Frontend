@@ -27,10 +27,10 @@ export default function CartPage() {
   if (cartItems.length === 0)
     return (
       <div className="mx-auto  p-5 mt-10 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
-        <span className="absolute top-18 lg:left-15">
-          <DynamicBreadcrumb />
-        </span>
         <div className="flex lg:pt-60 lg:pb-50 lg:w-330 flex-col items-center justify-center">
+          <span className="absolute top-16 bg-gray-300 w-screen">
+            <DynamicBreadcrumb />
+          </span>
           <ShoppingBag className="w-20 h-20 opacity-40 mb-4" />
           <p className="text-lg text-gray-500">Your cart is empty!</p>
           <Link
@@ -46,6 +46,7 @@ export default function CartPage() {
   return (
     <div className="mx-auto p-5 lg:p-20 bg-gray-300 min-h-screen mt-15">
       <DynamicBreadcrumb />
+
       {/* <h1 className="text-3xl font-bold mb-6">Your Cart</h1> */}
 
       <div className="flex flex-col lg:flex-row gap-6">

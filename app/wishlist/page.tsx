@@ -17,10 +17,10 @@ export default function WishlistPage() {
   if (wishlist.length === 0) {
     return (
       <div className="mx-auto  p-5 mt-10 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
-        <span className="absolute top-18 lg:left-15">
+        <div className="flex lg:pt-60 lg:pb-50 lg:w-330 flex-col items-center justify-center">
+        <span className="absolute top-16 bg-gray-300 w-screen">
           <DynamicBreadcrumb />
         </span>
-        <div className="flex lg:pt-60 lg:pb-50 lg:w-330 flex-col items-center justify-center">
           <Heart className="w-20 h-20 opacity-40 mb-4" />
           <p className="text-lg text-gray-500">Your Wishlist!</p>
           <Link

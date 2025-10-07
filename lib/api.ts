@@ -3,11 +3,11 @@ export const getApiBaseUrl = (): string => {
   // Check if we're in development or production
   if (typeof window !== "undefined") {
     // Client-side: use environment variable or fallback
-    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
   }
 
   // Server-side: use environment variable or fallback
-  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 };
 
 // API endpoints
