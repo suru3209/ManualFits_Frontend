@@ -259,16 +259,18 @@ export default function OrdersManagement() {
                             key={index}
                             className="flex items-center space-x-3 p-2 bg-gray-50 rounded"
                           >
-                            {item.product.images[0] && (
-                              <img
-                                src={item.product.images[0]}
-                                alt={item.product.name}
-                                className="w-10 h-10 object-cover rounded"
-                              />
-                            )}
+                            {item.product &&
+                              item.product.images &&
+                              item.product.images[0] && (
+                                <img
+                                  src={item.product.images[0]}
+                                  alt={item.product.name || "Product"}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
                             <div className="flex-1">
                               <p className="font-medium text-sm">
-                                {item.product.name}
+                                {item.product?.name || "Deleted Product"}
                               </p>
                               <p className="text-sm text-gray-500">
                                 Qty: {item.quantity} × ₹{item.price}

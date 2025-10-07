@@ -7,3 +7,4 @@ export { default as MyCartSection } from "./MyCartSection";
 export { default as CouponsSection } from "./CouponsSection";
 export { default as ReviewsSection } from "./ReviewsSection";
 export { default as NotificationsSection } from "./NotificationsSection";
+export { default as CustomerSupportSection } from "./CustomerSupportSection";

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -23,6 +24,7 @@ import {
   Tag,
   Calendar,
   Filter,
+  Trash2,
 } from "lucide-react";
 
 interface Product {
@@ -69,6 +71,7 @@ const categoryConfig = {
 };
 
 export default function ProductsManagement() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -117,6 +120,30 @@ export default function ProductsManagement() {
     }
   };
 
+  const handleDeleteProduct = async (
+    productId: string,
+    productName: string
+  ) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${productName}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const { adminApi } = await import("@/lib/adminApi");
+      await adminApi.deleteProduct(productId);
+
+      // Refresh products
+      fetchProducts(currentPage, searchTerm, selectedCategory);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      console.error("Failed to delete product. Please try again.");
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -154,7 +181,10 @@ export default function ProductsManagement() {
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <Button
+            className="bg-purple-600 hover:bg-purple-700"
+            onClick={() => router.push("/admin/products/add")}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Product
           </Button>
@@ -223,7 +253,7 @@ export default function ProductsManagement() {
               <p className="text-gray-500">No products found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
               {products.map((product) => {
                 const statusInfo = getStatusConfig(product.status);
                 const categoryColor = getCategoryConfig(product.category);
@@ -231,94 +261,102 @@ export default function ProductsManagement() {
                 return (
                   <div
                     key={product._id}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
                   >
-                    {/* Product Image */}
-                    <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
-                      {product.images[0] ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-12 h-12 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">{product.brand}</p>
-                      </div>
-
-                      {/* Price and Discount */}
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-gray-900">
-                          ₹{product.price}
-                        </span>
-                        {product.originalPrice > product.price && (
-                          <>
-                            <span className="text-sm text-gray-500 line-through">
-                              ₹{product.originalPrice}
-                            </span>
-                            <Badge
-                              variant="secondary"
-                              className="bg-red-100 text-red-800"
-                            >
-                              {product.discount}% OFF
-                            </Badge>
-                          </>
+                    <div className="flex items-center space-x-4">
+                      {/* Product Image */}
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        {product.images[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-8 h-8 text-gray-400" />
+                          </div>
                         )}
                       </div>
 
-                      {/* Rating and Reviews */}
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">
-                            {product.rating}
-                          </span>
+                      {/* Product Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 text-lg truncate">
+                              {product.name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-2">
+                              {product.brand}
+                            </p>
+
+                            {/* Price and Discount */}
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className="text-lg font-bold text-gray-900">
+                                ₹{product.price}
+                              </span>
+                              {product.originalPrice > product.price && (
+                                <>
+                                  <span className="text-sm text-gray-500 line-through">
+                                    ₹{product.originalPrice}
+                                  </span>
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-red-100 text-red-800 text-xs"
+                                  >
+                                    {product.discount}% OFF
+                                  </Badge>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Additional Info */}
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <div className="flex items-center space-x-1">
+                                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                <span>{product.rating}</span>
+                                <span>({product.reviews})</span>
+                              </div>
+                              <span>Stock: {product.totalStock}</span>
+                              <span>
+                                Created: {formatDate(product.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Status and Category Badges */}
+                          <div className="flex flex-col items-end space-y-2 ml-4">
+                            <Badge className={statusInfo.color}>
+                              {statusInfo.label}
+                            </Badge>
+                            <Badge className={categoryColor}>
+                              {product.category}
+                            </Badge>
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          ({product.reviews} reviews)
-                        </span>
-                      </div>
-
-                      {/* Category and Status */}
-                      <div className="flex items-center justify-between">
-                        <Badge className={categoryColor}>
-                          {product.category}
-                        </Badge>
-                        <Badge className={statusInfo.color}>
-                          {statusInfo.label}
-                        </Badge>
-                      </div>
-
-                      {/* Stock Info */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">Stock:</span>
-                        <span
-                          className={`font-medium ${
-                            product.inStock ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {product.totalStock} units
-                        </span>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex space-x-2 pt-2">
-                        <Button size="sm" variant="outline" className="flex-1">
+                      <div className="flex space-x-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/admin/products/view/${product._id}`)
+                          }
+                          className="flex items-center"
+                        >
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/admin/products/edit/${product._id}`)
+                          }
+                          className="flex items-center"
+                        >
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
@@ -333,11 +371,11 @@ export default function ProductsManagement() {
                                 : "active"
                             )
                           }
-                          className={
+                          className={`flex items-center ${
                             product.status === "active"
-                              ? "text-red-600"
-                              : "text-green-600"
-                          }
+                              ? "text-red-600 hover:bg-red-50 border-red-200"
+                              : "text-green-600 hover:bg-green-50 border-green-200"
+                          }`}
                         >
                           {product.status === "active" ? (
                             <>
@@ -350,6 +388,17 @@ export default function ProductsManagement() {
                               Activate
                             </>
                           )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            handleDeleteProduct(product._id, product.name)
+                          }
+                          className="flex items-center text-red-600 hover:bg-red-50 border-red-200"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </div>

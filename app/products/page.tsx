@@ -8,7 +8,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import DynamicBreadcrumb from "@/lib/breadcrumb";
-import { Progress } from "@/components/ui/progress";
 import { buildApiUrl } from "@/lib/api";
 
 // Fetching products from backend API
@@ -29,7 +28,6 @@ function ProductsPageContent() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Get URL parameters
   const categoryParam = searchParams.get("category");
@@ -60,8 +58,7 @@ function ProductsPageContent() {
   useEffect(() => {
     fetchProducts()
       .then((data) => setProducts(data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+      .catch((err) => console.error(err));
   }, []);
 
   // Auto-apply URL parameters as filters
@@ -326,15 +323,6 @@ function ProductsPageContent() {
       </div>
     );
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen z-20 flex flex-col items-center justify-center bg-gray-100">
-        <p className="text-gray-700">Loading...</p>
-        <Progress value={63} className="opacity-70 w-30 lg:w-100" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-300">

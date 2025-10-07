@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import { safeLocalStorage } from "@/lib/storage";
 import { TrashIcon } from "../ui/skiper-ui/skiper42";
+import { Skeleton } from "../ui/loading";
 
 interface MyCartSectionProps {
   userCart: CartItem[];
@@ -19,7 +20,6 @@ export default function MyCartSection({
 }: MyCartSectionProps) {
   const { cartItems, removeFromCart, increaseQty, decreaseQty, totalItems } =
     useCart();
-  const [isLoading, setIsLoading] = useState(false);
   const [cartData, setCartData] = useState<CartItem[]>(userCart);
   const router = useRouter();
 
@@ -33,7 +33,6 @@ export default function MyCartSection({
 
   // Handle remove item
   const handleRemoveItem = async (itemId: string) => {
-    setIsLoading(true);
     try {
       await removeFromCart(itemId);
       if (onCartUpdate) {
@@ -41,15 +40,13 @@ export default function MyCartSection({
       }
     } catch (error) {
       console.error("Error removing item from cart:", error);
-      alert("Failed to remove item from cart. Please try again.");
+      console.error("Failed to remove item from cart. Please try again.");
     } finally {
-      setIsLoading(false);
     }
   };
 
   // Handle quantity increase
   const handleIncreaseQty = async (itemId: string) => {
-    setIsLoading(true);
     try {
       await increaseQty(itemId);
       if (onCartUpdate) {
@@ -57,15 +54,13 @@ export default function MyCartSection({
       }
     } catch (error) {
       console.error("Error increasing quantity:", error);
-      alert("Failed to update quantity. Please try again.");
+      console.error("Failed to update quantity. Please try again.");
     } finally {
-      setIsLoading(false);
     }
   };
 
   // Handle quantity decrease
   const handleDecreaseQty = async (itemId: string) => {
-    setIsLoading(true);
     try {
       await decreaseQty(itemId);
       if (onCartUpdate) {
@@ -73,9 +68,8 @@ export default function MyCartSection({
       }
     } catch (error) {
       console.error("Error decreasing quantity:", error);
-      alert("Failed to update quantity. Please try again.");
+      console.error("Failed to update quantity. Please try again.");
     } finally {
-      setIsLoading(false);
     }
   };
 
@@ -168,7 +162,7 @@ export default function MyCartSection({
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleDecreaseQty(itemId)}
-                        disabled={isLoading || quantity <= 1}
+                        disabled={quantity <= 1}
                         className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                       >
                         <Minus className="w-3 h-3" />
@@ -178,7 +172,6 @@ export default function MyCartSection({
                       </span>
                       <button
                         onClick={() => handleIncreaseQty(itemId)}
-                        disabled={isLoading}
                         className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                       >
                         <Plus className="w-3 h-3" />
@@ -188,7 +181,6 @@ export default function MyCartSection({
                     {/* Remove Button */}
                     <button
                       onClick={() => handleRemoveItem(itemId)}
-                      disabled={isLoading}
                       className="text-red-600 hover:text-red-800 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
                     >
                       <TrashIcon />
@@ -219,10 +211,9 @@ export default function MyCartSection({
                 </span>
                 <button
                   onClick={handleProceedToCheckout}
-                  disabled={isLoading}
                   className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto"
                 >
-                  {isLoading ? "Processing..." : "Proceed to Checkout"}
+                  Proceed to Checkout
                 </button>
               </div>
             </div>

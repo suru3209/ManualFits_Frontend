@@ -88,7 +88,6 @@ export default function ProductPage() {
   } = useWishlist();
   const { showToast } = useToast();
   const [product, setProduct] = useState<AnyProduct | null>(null);
-  const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -487,7 +486,6 @@ export default function ProductPage() {
       } catch {
         setProduct(null);
       } finally {
-        if (isMounted) setLoading(false);
       }
     })();
     return () => {
@@ -765,45 +763,8 @@ export default function ProductPage() {
                         <img
                           src={image}
                           alt={`Review image ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg hover:opacity-80 transition-opacity border-2 border-gray-200 hover:border-blue-300"
+                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
                         />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 bg-white bg-opacity-90 rounded-full p-1">
-                            <svg
-                              className="w-4 h-4 text-gray-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                        {/* Show +count overlay on 2nd image if more than 2 images */}
-                        {index === 1 &&
-                          review.images &&
-                          review.images.length > 2 && (
-                            <div
-                              className="absolute inset-0 bg-black bg-opacity-60 rounded-lg flex items-center justify-center cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                review.images &&
-                                  handleImageClick(review.images[2]);
-                              }}
-                            >
-                              <div className="text-center text-white">
-                                <div className="text-2xl font-bold">
-                                  +{review.images.length - 2}
-                                </div>
-                                <div className="text-xs opacity-90">more</div>
-                              </div>
-                            </div>
-                          )}
                       </div>
                     ))}
                   </div>
@@ -921,57 +882,6 @@ export default function ProductPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
                 />
-
-                {/* Navigation arrows */}
-                {product.images.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevImage}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={nextImage}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </>
-                )}
-
-                {/* Action buttons */}
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <motion.button
-                    onClick={shareProduct}
-                    className="bg-white/90 hover:bg-white rounded-full p-2 shadow-lg"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Share2 className="w-5 h-5 text-gray-700" />
-                  </motion.button>
-                  <motion.button
-                    onClick={toggleWishlist}
-                    className={`rounded-full p-2 shadow-lg transition-all ${
-                      wishlist
-                        ? "bg-red-500 text-white"
-                        : "bg-white/90 hover:bg-white text-gray-700"
-                    }`}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Heart
-                      className={`w-5 h-5 ${wishlist ? "fill-current" : ""}`}
-                    />
-                  </motion.button>
-                </div>
-
-                {/* Discount badge */}
-                {product.discount > 0 && (
-                  <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    -{product.discount}%
-                  </div>
-                )}
               </div>
 
               {/* Thumbnail images */}
@@ -982,12 +892,11 @@ export default function ProductPage() {
                       key={img}
                       src={img}
                       alt="thumbnail"
-                      className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${
+                      className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 ${
                         currentImageIndex === index
-                          ? "border-blue-500 shadow-lg"
-                          : "border-gray-200 hover:border-gray-400"
+                          ? "border-blue-500"
+                          : "border-gray-200"
                       }`}
-                      whileHover={{ scale: 1.05 }}
                       onClick={() => setCurrentImageIndex(index)}
                     />
                   ))}
@@ -1017,6 +926,32 @@ export default function ProductPage() {
               >
                 {product.name}
               </motion.h1>
+
+              {/* Action buttons */}
+              <div className="flex gap-2 mb-4">
+                <motion.button
+                  onClick={shareProduct}
+                  className="bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Share2 className="w-5 h-5 text-gray-700" />
+                </motion.button>
+                <motion.button
+                  onClick={toggleWishlist}
+                  className={`rounded-full p-2 transition-all ${
+                    wishlist
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Heart
+                    className={`w-5 h-5 ${wishlist ? "fill-current" : ""}`}
+                  />
+                </motion.button>
+              </div>
             </div>
 
             {/* Rating and Reviews */}
@@ -1047,16 +982,6 @@ export default function ProductPage() {
                   </span>
                 )}
               </div>
-              {product.discount > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                    Save ₹{product.originalPrice - product.price}
-                  </span>
-                  <span className="text-xs text-gray-600">
-                    ({product.discount}% OFF)
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Stock Status */}
@@ -1306,21 +1231,11 @@ export default function ProductPage() {
                                   {feature}
                                 </li>
                               )
-                            ) ||
-                              [
-                                "Premium quality materials",
-                                "Comfortable fit and design",
-                                "Durable construction",
-                                "Easy care instructions",
-                              ].map((feature, index) => (
-                                <li
-                                  key={index}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Check className="w-4 h-4 text-green-500" />
-                                  {feature}
-                                </li>
-                              ))}
+                            ) || (
+                              <p className="text-gray-500 text-sm">
+                                No key features available
+                              </p>
+                            )}
                           </ul>
                         </div>
                         <div>
@@ -1336,15 +1251,11 @@ export default function ProductPage() {
                               (instruction: string, index: number) => (
                                 <li key={index}>• {instruction}</li>
                               )
-                            ) ||
-                              [
-                                "Machine wash cold",
-                                "Tumble dry low",
-                                "Do not bleach",
-                                "Iron on low heat",
-                              ].map((instruction, index) => (
-                                <li key={index}>• {instruction}</li>
-                              ))}
+                            ) || (
+                              <p className="text-gray-500 text-sm">
+                                No care instructions available
+                              </p>
+                            )}
                           </ul>
                         </div>
                       </div>
@@ -1390,7 +1301,7 @@ export default function ProductPage() {
                             </span>
                             <span className="text-gray-900">
                               {(product as unknown as { material?: string })
-                                .material || "Premium Cotton Blend"}
+                                .material || "Not specified"}
                             </span>
                           </div>
                           <div className="flex justify-between py-2 border-b">
@@ -1399,7 +1310,7 @@ export default function ProductPage() {
                             </span>
                             <span className="text-gray-900">
                               {(product as unknown as { origin?: string })
-                                .origin || "Made in India"}
+                                .origin || "Not specified"}
                             </span>
                           </div>
                         </div>
@@ -1410,7 +1321,7 @@ export default function ProductPage() {
                             </span>
                             <span className="text-gray-900">
                               {(product as unknown as { weight?: string })
-                                .weight || "250g"}
+                                .weight || "Not specified"}
                             </span>
                           </div>
                           <div className="flex justify-between py-2 border-b">
@@ -1419,7 +1330,7 @@ export default function ProductPage() {
                             </span>
                             <span className="text-gray-900">
                               {(product as unknown as { warranty?: string })
-                                .warranty || "1 Year"}
+                                .warranty || "Not specified"}
                             </span>
                           </div>
                           <div className="flex justify-between py-2 border-b">
@@ -1618,11 +1529,6 @@ export default function ProductPage() {
                         alt={relatedProduct.name}
                         className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
                       />
-                      {relatedProduct.discount > 0 && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                          -{relatedProduct.discount}%
-                        </div>
-                      )}
                     </div>
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-gray-900 mb-1 truncate">

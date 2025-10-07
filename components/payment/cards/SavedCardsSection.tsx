@@ -49,7 +49,7 @@ export default function SavedCardsSection() {
       setCards(response.cards || []);
     } catch (error) {
       console.error("Error fetching cards:", error);
-      alert("Failed to fetch cards. Please try again.");
+      console.error("Failed to fetch cards. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,17 +67,17 @@ export default function SavedCardsSection() {
 
       if (editingCard) {
         await cardApi.update(editingCard.card_id, form);
-        alert("Card updated successfully!");
+        console.log("Card updated successfully!");
       } else {
         await cardApi.add(form);
-        alert("Card added successfully!");
+        console.log("Card added successfully!");
       }
 
       await fetchCards();
       resetForm();
     } catch (error) {
       console.error("Error saving card:", error);
-      alert("Failed to save card. Please try again.");
+      console.error("Failed to save card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -105,11 +105,11 @@ export default function SavedCardsSection() {
     try {
       setLoading(true);
       await cardApi.delete(cardId);
-      alert("Card deleted successfully!");
+      console.log("Card deleted successfully!");
       await fetchCards();
     } catch (error) {
       console.error("Error deleting card:", error);
-      alert("Failed to delete card. Please try again.");
+      console.error("Failed to delete card. Please try again.");
     } finally {
       setLoading(false);
     }

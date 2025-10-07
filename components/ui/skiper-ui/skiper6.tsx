@@ -74,7 +74,7 @@ export default function ProductPage() {
       price: product.price,
       qty,
     });
-    alert(`${product.name} added to cart!`);
+    console.log(`${product.name} added to cart!`);
   };
 
   return (

@@ -29,11 +29,11 @@ interface Review {
     username: string;
     email: string;
   };
-  product: {
+  product?: {
     _id: string;
     name: string;
     images: string[];
-  };
+  } | null;
   rating: number;
   title: string;
   comment: string;
@@ -206,16 +206,16 @@ export default function ReviewsManagement() {
                   {/* Product Info */}
                   <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      {review.product.images[0] && (
+                      {review.product?.images?.[0] && (
                         <img
                           src={review.product.images[0]}
-                          alt={review.product.name}
+                          alt={review.product.name || "Product"}
                           className="w-12 h-12 object-cover rounded"
                         />
                       )}
                       <div>
                         <p className="font-medium text-gray-900">
-                          {review.product.name}
+                          {review.product?.name || "Unknown Product"}
                         </p>
                         <div className="flex items-center space-x-1 text-sm text-gray-500">
                           <Package className="w-4 h-4" />

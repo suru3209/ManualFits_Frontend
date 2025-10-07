@@ -40,7 +40,7 @@ export default function GiftCardsSection() {
       setGiftCards(response.gift_cards || []);
     } catch (error) {
       console.error("Error fetching gift cards:", error);
-      alert("Failed to fetch gift cards. Please try again.");
+      console.error("Failed to fetch gift cards. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -58,17 +58,17 @@ export default function GiftCardsSection() {
 
       if (editingGiftCard) {
         await giftCardApi.update(editingGiftCard.giftcard_id, form);
-        alert("Gift card updated successfully!");
+        console.log("Gift card updated successfully!");
       } else {
         await giftCardApi.add(form);
-        alert("Gift card added successfully!");
+        console.log("Gift card added successfully!");
       }
 
       await fetchGiftCards();
       resetForm();
     } catch (error) {
       console.error("Error saving gift card:", error);
-      alert("Failed to save gift card. Please try again.");
+      console.error("Failed to save gift card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -93,11 +93,11 @@ export default function GiftCardsSection() {
     try {
       setLoading(true);
       await giftCardApi.delete(giftCardId);
-      alert("Gift card deleted successfully!");
+      console.log("Gift card deleted successfully!");
       await fetchGiftCards();
     } catch (error) {
       console.error("Error deleting gift card:", error);
-      alert("Failed to delete gift card. Please try again.");
+      console.error("Failed to delete gift card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -296,7 +296,7 @@ export default function GiftCardsSection() {
                   title="Delete Gift Card"
                   disabled={loading}
                 >
-                  <TrashIcon/>
+                  <TrashIcon />
                 </button>
               </div>
             </div>

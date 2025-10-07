@@ -43,7 +43,7 @@ import {
   Ticket,
   Trash,
   X,
-  // MessageCircle,
+  MessageCircle,
 } from "lucide-react";
 import {
   GiftCardsSection,
@@ -62,6 +62,7 @@ import {
   CouponsSection,
   // ReviewsSection,
   NotificationsSection,
+  CustomerSupportSection,
 } from "@/components/dashboard";
 
 interface Order {
@@ -144,7 +145,7 @@ interface UserData {
 }
 // import { Label } from "@/components/ui/label";
 // import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress";
 // import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
 
 export default function DashboardPage() {
@@ -152,7 +153,6 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const [user, setUser] = useState<UserData | null>(null);
   const [, setRecentOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string>("");
   const [activeSection, setActiveSection] = useState("personal-info");
   const [userAddresses, setUserAddresses] = useState<Address[]>([]);
@@ -219,6 +219,7 @@ export default function DashboardPage() {
   const giftCardsRef = useRef<HTMLDivElement>(null);
   const savedUpiRef = useRef<HTMLDivElement>(null);
   const savedCardsRef = useRef<HTMLDivElement>(null);
+  const customerSupportRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
 
@@ -234,6 +235,8 @@ export default function DashboardPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Remove the aggressive scroll lock - allow normal page scrolling
+
   // Load existing reviews when userOrders changes
   useEffect(() => {
     if (userOrders && userOrders.length > 0) {
@@ -248,10 +251,15 @@ export default function DashboardPage() {
     }
   }, [activeSection]);
 
-  // Scroll to content function
+  // Scroll to content function - ONLY for mobile devices
   const scrollToContent = (section: string) => {
-    if (!isMobile) return;
+    // Completely disable scroll on desktop - only work on mobile
+    if (!isMobile) {
+      console.log("Desktop mode: Scroll disabled");
+      return;
+    }
 
+    console.log("Mobile mode: Scrolling to", section);
     const refs: { [key: string]: React.RefObject<HTMLDivElement | null> } = {
       "personal-info": personalInfoRef,
       "edit-profile": editProfileRef,
@@ -264,6 +272,7 @@ export default function DashboardPage() {
       "gift-cards": giftCardsRef,
       "saved-upi": savedUpiRef,
       "saved-cards": savedCardsRef,
+      "customer-support": customerSupportRef,
     };
 
     const targetRef = refs[section];
@@ -447,15 +456,15 @@ export default function DashboardPage() {
         setProfileImageUrl("");
         setProfileImagePublicId("");
         setActiveSection("personal-info");
-        alert("Profile updated successfully!");
+        console.log("Profile updated successfully!");
       } else {
         const errorData = await response.json();
         console.error("Dashboard - Profile update failed:", errorData);
-        alert("Failed to update profile. Please try again.");
+        console.error("Failed to update profile. Please try again.");
       }
     } catch (error) {
       console.error("Dashboard - Error updating profile:", error);
-      alert("Error updating profile. Please try again.");
+      console.error("Error updating profile. Please try again.");
     }
   };
 
@@ -933,7 +942,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error cancelling order:", error);
-      alert("Failed to cancel order. Please try again.");
+      console.error("Failed to cancel order. Please try again.");
     }
   };
 
@@ -969,7 +978,9 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error submitting return/replace request:", error);
-      alert("Failed to submit return/replace request. Please try again.");
+      console.error(
+        "Failed to submit return/replace request. Please try again."
+      );
     }
   };
 
@@ -977,7 +988,6 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!user) {
-        setLoading(false);
         return;
       }
       try {
@@ -993,7 +1003,6 @@ export default function DashboardPage() {
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {
-        setLoading(false);
       }
     };
     fetchOrders();
@@ -1024,13 +1033,13 @@ export default function DashboardPage() {
 
       if (response.ok) {
         await fetchUserAddresses();
-        alert("Default address updated successfully!");
+        console.log("Default address updated successfully!");
       } else {
         throw new Error("Failed to update default address");
       }
     } catch (error) {
       console.error("Error setting default address:", error);
-      alert("Failed to update default address. Please try again.");
+      console.error("Failed to update default address. Please try again.");
     }
   };
 
@@ -1069,13 +1078,13 @@ export default function DashboardPage() {
           type: "Home",
           is_default: false,
         });
-        alert("Address added successfully!");
+        console.log("Address added successfully!");
       } else {
         throw new Error("Failed to add address");
       }
     } catch (error) {
       console.error("Error adding address:", error);
-      alert("Failed to add address. Please try again.");
+      console.error("Failed to add address. Please try again.");
     }
   };
 
@@ -1146,13 +1155,13 @@ export default function DashboardPage() {
           type: "Home",
           is_default: false,
         });
-        alert("Address updated successfully!");
+        console.log("Address updated successfully!");
       } else {
         throw new Error("Failed to update address");
       }
     } catch (error) {
       console.error("Error updating address:", error);
-      alert("Failed to update address. Please try again.");
+      console.error("Failed to update address. Please try again.");
     }
   };
 
@@ -1174,24 +1183,16 @@ export default function DashboardPage() {
 
       if (response.ok) {
         await fetchUserAddresses();
-        alert("Address deleted successfully!");
+        console.log("Address deleted successfully!");
       } else {
         throw new Error("Failed to delete address");
       }
     } catch (error) {
       console.error("Error deleting address:", error);
-      alert("Failed to delete address. Please try again.");
+      console.error("Failed to delete address. Please try again.");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen z-20 flex flex-col items-center justify-center bg-gray-100">
-        <p className="text-gray-700">Loading...</p>
-        <Progress value={63} className="opacity-70 lg:w-100 w-30" />
-      </div>
-    );
-  }
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -1208,7 +1209,10 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 mt-15">
+      <div
+        className="flex flex-col lg:flex-row min-h-screen bg-gray-100"
+        style={{ scrollBehavior: "auto" }}
+      >
         {/* Left Navigation */}
         <div className="w-full lg:w-1/4 bg-white shadow-lg">
           <div className="p-4 sm:p-6">
@@ -1479,6 +1483,24 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+
+            {/* Customer Support */}
+            <button
+              onClick={() => {
+                setActiveSection("customer-support");
+                // No scroll behavior for customer support on any device
+                console.log("Customer support clicked - no scroll");
+              }}
+              className={`flex items-center w-full text-left p-2 rounded font-semibold text-sm sm:text-base mb-4 ${
+                activeSection === "customer-support"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Customer Support</span>
+              <span className="sm:hidden">Support</span>
+            </button>
 
             {/* Logout */}
             <button
@@ -1811,6 +1833,12 @@ export default function DashboardPage() {
           {activeSection === "saved-cards" && (
             <div ref={savedCardsRef}>
               <SavedCardsSection />
+            </div>
+          )}
+
+          {activeSection === "customer-support" && (
+            <div ref={customerSupportRef}>
+              <CustomerSupportSection userOrders={userOrders} />
             </div>
           )}
         </div>

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { adminApi } from "@/lib/adminApi";
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
@@ -21,40 +22,70 @@ export default function AdminLoginPage() {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    setIsLoading(true);
+
+    // Basic client-side validation
+    if (!formData.username.trim()) {
+      setError("Please enter your username.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      setError("Please enter your password.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch("http://localhost:8080/api/admin/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const data = await adminApi.login(formData.username, formData.password);
 
-      const data = await response.json();
+      // Store admin token and info
+      localStorage.setItem("adminToken", data.token);
+      localStorage.setItem("adminInfo", JSON.stringify(data.admin));
 
-      if (response.ok) {
-        // Store admin token and info
-        localStorage.setItem("adminToken", data.token);
-        localStorage.setItem("adminInfo", JSON.stringify(data.admin));
+      // Redirect to admin dashboard
+      router.push("/admin");
+    } catch (error: any) {
+      console.error("Admin login error:", error);
 
-        // Redirect to admin dashboard
-        router.push("/admin");
+      // Handle specific error cases based on status codes
+      if (error.status === 401) {
+        setError(
+          "Invalid username or password. Please check your credentials."
+        );
+      } else if (error.status === 404) {
+        setError(
+          "Admin account not found. Please contact system administrator."
+        );
+      } else if (error.status === 403) {
+        setError("Access denied. Your account may not have admin privileges.");
+      } else if (error.status === 500) {
+        setError("Server error. Please try again later.");
+      } else if (error.message?.includes("Network")) {
+        setError("Network error. Please check your connection and try again.");
+      } else if (
+        error.message?.includes("Invalid") ||
+        error.message?.includes("invalid")
+      ) {
+        setError(
+          "Invalid credentials. Please check your username and password."
+        );
       } else {
-        setError(data.message || "Login failed");
+        setError(
+          error.message ||
+            "Login failed. Please check your credentials and try again."
+        );
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -63,6 +94,11 @@ export default function AdminLoginPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+    // Clear error when user starts typing
+    if (error) {
+      setError("");
+    }
   };
 
   return (
@@ -139,10 +175,17 @@ export default function AdminLoginPage() {
 
               <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Signing In...
+                  </div>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
 

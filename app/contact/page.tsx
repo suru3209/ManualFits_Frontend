@@ -18,7 +18,9 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Message sent successfully!\n\n${JSON.stringify(formData, null, 2)}`);
+    console.log(
+      `Message sent successfully!\n\n${JSON.stringify(formData, null, 2)}`
+    );
     setFormData({ name: "", email: "", message: "" });
   };
 

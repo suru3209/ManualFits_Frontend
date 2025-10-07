@@ -42,7 +42,6 @@ interface CheckoutUPI {
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   // const router = useRouter();
 
   // All state hooks must be declared before any conditional returns
@@ -207,15 +206,6 @@ export default function CheckoutPage() {
     checkLoginStatus();
   }, []);
 
-  // Redirect to login if not logged in
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-gray-700 text-lg">Loading...</p>
-      </div>
-    );
-  }
-
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -304,13 +294,13 @@ export default function CheckoutPage() {
         // Refresh addresses
         await fetchUserAddresses();
         setEditingAddress(null);
-        alert("Address updated successfully!");
+        console.log("Address updated successfully!");
       } else {
         throw new Error("Failed to update address");
       }
     } catch (error) {
       console.error("Error updating address:", error);
-      alert("Failed to update address. Please try again.");
+      console.error("Failed to update address. Please try again.");
     }
   };
 
@@ -340,13 +330,13 @@ export default function CheckoutPage() {
         // Refresh addresses
         await fetchUserAddresses();
         setShowNewAddressForm(false);
-        alert("Address saved successfully!");
+        console.log("Address saved successfully!");
       } else {
         throw new Error("Failed to save address");
       }
     } catch (error) {
       console.error("Error saving address:", error);
-      alert("Failed to save address. Please try again.");
+      console.error("Failed to save address. Please try again.");
     }
   };
 
@@ -364,10 +354,10 @@ export default function CheckoutPage() {
         cardholder_name: "",
         is_default: false,
       });
-      alert("Card saved successfully!");
+      console.log("Card saved successfully!");
     } catch (error) {
       console.error("Error saving card:", error);
-      alert("Failed to save card. Please try again.");
+      console.error("Failed to save card. Please try again.");
     }
   };
 
@@ -381,17 +371,17 @@ export default function CheckoutPage() {
         name: "",
         is_default: false,
       });
-      alert("UPI saved successfully!");
+      console.log("UPI saved successfully!");
     } catch (error) {
       console.error("Error saving UPI:", error);
-      alert("Failed to save UPI. Please try again.");
+      console.error("Failed to save UPI. Please try again.");
     }
   };
 
   const handlePlaceOrder = async () => {
     // Validation
     if (!selectedAddress && !showNewAddressForm) {
-      alert("Please select an address or add a new one");
+      console.warn("Please select an address or add a new one");
       return;
     }
 
@@ -400,12 +390,12 @@ export default function CheckoutPage() {
       !selectedCard &&
       !showNewCardForm
     ) {
-      alert("Please select a card or add a new one");
+      console.warn("Please select a card or add a new one");
       return;
     }
 
     if (formData.paymentMethod === "upi" && !selectedUPI && !showNewUPIForm) {
-      alert("Please select a UPI or add a new one");
+      console.warn("Please select a UPI or add a new one");
       return;
     }
 
@@ -488,7 +478,9 @@ export default function CheckoutPage() {
         await clearCart();
         console.log("Cart cleared after successful order");
 
-        alert(`Order placed successfully! Order ID: ${orderResult.order._id}`);
+        console.log(
+          `Order placed successfully! Order ID: ${orderResult.order._id}`
+        );
 
         // Redirect to dashboard
         window.location.href = "/account/dashboard";
@@ -504,7 +496,7 @@ export default function CheckoutPage() {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
       console.error("Error details:", errorMessage);
-      alert(`Failed to place order: ${errorMessage}`);
+      console.error(`Failed to place order: ${errorMessage}`);
     } finally {
       setIsPlacingOrder(false);
     }

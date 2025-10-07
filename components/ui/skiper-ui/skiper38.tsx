@@ -590,11 +590,113 @@ const AppleBag = () => (
 const MobileMenu = ({
   items,
   onCloseMenu,
+  isLoggedIn,
+  isHydrated,
+  showTooltip,
+  totalItems,
+  searchRef,
+  isOpen,
+  setIsOpen,
+  query,
+  setQuery,
+  handleKeyDown,
+  mobileMenuRef,
 }: {
   items: typeof NAVIGATION_ITEMS;
   onCloseMenu: () => void;
+  isLoggedIn: boolean;
+  isHydrated: boolean;
+  showTooltip: boolean;
+  totalItems: number;
+  searchRef: React.RefObject<HTMLDivElement | null>;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  mobileMenuRef: React.RefObject<HTMLDivElement | null>;
 }) => (
-  <div className="pt-15 h-screen w-screen bg-white backdrop-blur-2xl">
+  <div
+    ref={mobileMenuRef}
+    className="pt-15 h-screen w-screen bg-white backdrop-blur-2xl"
+  >
+    {/* Mobile Icons Header */}
+    <div className="flex items-center justify-center px-6 py-4 border-b border-gray-200">
+      <div className="flex items-center gap-4">
+        {/* Search Icon */}
+        <div ref={searchRef} className="relative flex items-center">
+          <button
+            onClick={() => setIsOpen(true)}
+            className={`p-2 rounded-full hover:bg-gray-200 transition ${
+              isOpen ? "opacity-0" : "opacity-100"
+            }`}
+          >
+            <AppleSearch />
+          </button>
+
+          {/* Input Field - shows centered above icons */}
+          {isOpen && (
+            <div className="absolute ml-15 -mt-8 top-0 left-1/2 transform -translate-x-1/2 -translate-y-full z-50 mb-2">
+              <div className="relative flex items-center bg-white border border-gray-300 rounded-full shadow-lg">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search products..."
+                  className="pl-4 pr-10 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-700 transition-all duration-300 w-64"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setQuery("");
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full"
+                >
+                  <Plus className="size-4 -rotate-45 stroke-[1]" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* User Icon */}
+        {isHydrated ? (
+          <Tooltip open={false}>
+            <TooltipTrigger asChild>
+              <Link
+                href={isLoggedIn ? "/account/dashboard" : "/account/login"}
+                onClick={onCloseMenu}
+              >
+                <CircleUser className="opacity-79 size-6" />
+              </Link>
+            </TooltipTrigger>
+          </Tooltip>
+        ) : (
+          <Link href="/account/login" onClick={onCloseMenu}>
+            <CircleUser className="opacity-79 size-6" />
+          </Link>
+        )}
+
+        {/* Wishlist Icon */}
+        <Link href="/wishlist" onClick={onCloseMenu}>
+          <Heart className="opacity-79 size-6" />
+        </Link>
+
+        {/* Cart Icon */}
+        <Link href="/cart" className="relative" onClick={onCloseMenu}>
+          <AppleBag />
+          {totalItems > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {totalItems}
+            </span>
+          )}
+        </Link>
+      </div>
+    </div>
+
+    {/* Menu Items */}
     <motion.ul
       initial="hidden"
       animate="visible"
@@ -607,7 +709,7 @@ const MobileMenu = ({
           },
         },
       }}
-      className="flex flex-col gap-5 text-3xl font-[600] tracking-tight"
+      className="flex flex-col gap-5 text-3xl font-[600] tracking-tight pt-4"
     >
       {items.map((item, index) => (
         <motion.li
@@ -644,16 +746,48 @@ const AppleNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   //login
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(true);
 
   useEffect(() => {
     setIsHydrated(true);
     const user = localStorage.getItem("user");
     setIsLoggedIn(!!user);
   }, []);
+
+  // Tooltip timer - toggle every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowTooltip((prev) => !prev);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Outside click detection for mobile menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        isMenuOpen
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const router = useRouter();
 
@@ -662,6 +796,7 @@ const AppleNavbar = () => {
       router.push(`/search?query=${encodeURIComponent(query)}`);
       setIsOpen(false); // input band kar dena
       setQuery(""); // clear kar dena
+      setIsMenuOpen(false); // mobile menu close kar dena
     }
   };
 
@@ -730,8 +865,12 @@ const AppleNavbar = () => {
 
           {/* Icons */}
           <li className="flex items-center justify-center gap-5 lg:gap-8">
+            {/* Search Icon - Hidden on mobile, shown next to hamburger */}
             <AppleIcon isMenuOpen={isMenuOpen}>
-              <div ref={searchRef} className="relative flex items-center">
+              <div
+                ref={searchRef}
+                className="relative hidden lg:flex items-center"
+              >
                 {/* Show icon only when input is closed */}
                 {!isOpen && (
                   <button
@@ -762,50 +901,58 @@ const AppleNavbar = () => {
                 )}
               </div>
             </AppleIcon>
+            {/* Hidden on mobile - shown in mobile menu instead */}
             <AppleIcon isMenuOpen={isMenuOpen}>
-              {isHydrated ? (
-                <Tooltip open={!isLoggedIn}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={
-                        isLoggedIn ? "/account/dashboard" : "/account/login"
-                      }
-                    >
-                      <CircleUser className="opacity-79" />
-                    </Link>
-                  </TooltipTrigger>
-                  {!isLoggedIn && (
-                    <TooltipContent
-                      side="bottom"
-                      className="bg-gray-800 text-white z-[9999]"
-                    >
-                      <p>Login & Signup</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              ) : (
-                <Link href="/account/login">
-                  <CircleUser className="opacity-79" />
-                </Link>
-              )}
-            </AppleIcon>
-            <AppleIcon isMenuOpen={isMenuOpen}>
-              <Link href="/wishlist">
-                <Heart className="opacity-79" />
-              </Link>
-            </AppleIcon>
-            <AppleIcon isMenuOpen={isMenuOpen}>
-              <Link href="/cart" className="relative">
-                <AppleBag />
-                {totalItems === 0 ? (
-                  ""
+              <div className="hidden lg:block">
+                {isHydrated ? (
+                  <Tooltip open={!isLoggedIn && showTooltip}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={
+                          isLoggedIn ? "/account/dashboard" : "/account/login"
+                        }
+                      >
+                        <CircleUser className="opacity-79" />
+                      </Link>
+                    </TooltipTrigger>
+                    {!isLoggedIn && (
+                      <TooltipContent
+                        side="bottom"
+                        className="bg-gray-800 text-white z-[9999] hidden lg:block"
+                      >
+                        <p>Login & Signup</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 ) : (
-                  <span className="absolute top-3 -right-2 bg-gray-800 text-white text-xs rounded-full px-1">
-                    {totalItems}
-                  </span>
+                  <Link href="/account/login">
+                    <CircleUser className="opacity-79" />
+                  </Link>
                 )}
-              </Link>
+              </div>
             </AppleIcon>
+            <AppleIcon isMenuOpen={isMenuOpen}>
+              <div className="hidden lg:block">
+                <Link href="/wishlist">
+                  <Heart className="opacity-79" />
+                </Link>
+              </div>
+            </AppleIcon>
+            <AppleIcon isMenuOpen={isMenuOpen}>
+              <div className="hidden lg:block">
+                <Link href="/cart" className="relative">
+                  <AppleBag />
+                  {totalItems === 0 ? (
+                    ""
+                  ) : (
+                    <span className="absolute top-3 -right-2 bg-gray-800 text-white text-xs rounded-full px-1">
+                      {totalItems}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            </AppleIcon>
+
             <span className="cursor-pointer" onClick={toggleMenu}>
               {!isMenuOpen ? (
                 <Menu className="block size-6 stroke-[1] lg:hidden lg:size-4" />
@@ -854,6 +1001,17 @@ const AppleNavbar = () => {
             <MobileMenu
               items={NAVIGATION_ITEMS}
               onCloseMenu={() => setIsMenuOpen(false)}
+              isLoggedIn={isLoggedIn}
+              isHydrated={isHydrated}
+              showTooltip={showTooltip}
+              totalItems={totalItems}
+              searchRef={searchRef}
+              isOpen={isOpen}
+              setIsOpen={setIsOpen}
+              query={query}
+              setQuery={setQuery}
+              handleKeyDown={handleKeyDown}
+              mobileMenuRef={mobileMenuRef}
             />
           )}
         </AnimatePresence>

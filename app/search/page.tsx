@@ -23,7 +23,6 @@ function SearchPageContent() {
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<unknown[]>([]);
 
   useEffect(() => {
@@ -32,8 +31,7 @@ function SearchPageContent() {
       .then((data) => {
         if (mounted) setProducts(data);
       })
-      .catch(() => {})
-      .finally(() => mounted && setLoading(false));
+      .catch(() => {});
     return () => {
       mounted = false;
     };
@@ -110,7 +108,8 @@ function SearchPageContent() {
         const inBrand = productData.brand?.toLowerCase().includes(q);
         const inCategory = productData.category?.toLowerCase().includes(q); // changed to includes for better search
         const inSubcategory = productData.subcategory
-          ?.toLowerCase()
+          ?.toString()
+          .toLowerCase()
           .includes(q);
         const inTags = productData.tags?.some((t: string) =>
           t.toLowerCase().includes(q)
@@ -301,7 +300,7 @@ function SearchPageContent() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-300">
+    <div className="min-h-screen mt-10 lg:mt-15 bg-gray-300">
       <DynamicBreadcrumb />
       {/* Mobile Filter Button */}
       <div className="lg:hidden fixed top-20 left-4 z-40">
@@ -318,7 +317,7 @@ function SearchPageContent() {
         </button>
       </div>
 
-      <div className="container mx-auto px-4 pt-10 pb-8">
+      <div className="container mx-auto px-4 pb-8">
         {/* Search Tag Line */}
         {query && (
           <div className="text-center mb-6">

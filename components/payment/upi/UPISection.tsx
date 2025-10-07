@@ -36,7 +36,7 @@ export default function UPISection() {
       setUpiList(response.upi || []);
     } catch (error) {
       console.error("Error fetching UPI:", error);
-      alert("Failed to fetch UPI. Please try again.");
+      console.error("Failed to fetch UPI. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,17 +54,17 @@ export default function UPISection() {
 
       if (editingUPI) {
         await upiApi.update(editingUPI.upi_id, form);
-        alert("UPI updated successfully!");
+        console.log("UPI updated successfully!");
       } else {
         await upiApi.add(form);
-        alert("UPI added successfully!");
+        console.log("UPI added successfully!");
       }
 
       await fetchUPI();
       resetForm();
     } catch (error) {
       console.error("Error saving UPI:", error);
-      alert("Failed to save UPI. Please try again.");
+      console.error("Failed to save UPI. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -88,11 +88,11 @@ export default function UPISection() {
     try {
       setLoading(true);
       await upiApi.delete(upiId);
-      alert("UPI deleted successfully!");
+      console.log("UPI deleted successfully!");
       await fetchUPI();
     } catch (error) {
       console.error("Error deleting UPI:", error);
-      alert("Failed to delete UPI. Please try again.");
+      console.error("Failed to delete UPI. Please try again.");
     } finally {
       setLoading(false);
     }

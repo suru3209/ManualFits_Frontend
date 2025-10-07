@@ -8,6 +8,8 @@ import ProductsManagement from "@/components/admin/ProductsManagement";
 import OrdersManagement from "@/components/admin/OrdersManagement";
 import ReviewsManagement from "@/components/admin/ReviewsManagement";
 import ReturnsManagement from "@/components/admin/ReturnsManagement";
+import SupportManagement from "@/components/admin/SupportManagement";
+import AdminManagement from "@/components/admin/AdminManagement";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,6 +36,7 @@ import {
   ShoppingBag,
   Star as StarIcon,
   RotateCcw,
+  MessageCircle,
 } from "lucide-react";
 
 interface AdminOrder {
@@ -67,7 +70,6 @@ interface AdminInfo {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const router = useRouter();
 
@@ -101,7 +103,6 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
     } finally {
-      setLoading(false);
     }
   };
 
@@ -110,17 +111,6 @@ export default function AdminDashboard() {
     localStorage.removeItem("adminInfo");
     router.push("/admin/login");
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen z-1000 bg-gray-50">
@@ -171,6 +161,8 @@ export default function AdminDashboard() {
               { id: "orders", label: "Orders", icon: ShoppingCart },
               { id: "reviews", label: "Reviews", icon: StarIcon },
               { id: "returns", label: "Returns", icon: RotateCcw },
+              { id: "admins", label: "Admins", icon: UserCheck },
+              { id: "support", label: "Support", icon: MessageCircle },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -384,6 +376,10 @@ export default function AdminDashboard() {
         {activeTab === "reviews" && <ReviewsManagement />}
 
         {activeTab === "returns" && <ReturnsManagement />}
+
+        {activeTab === "admins" && <AdminManagement />}
+
+        {activeTab === "support" && <SupportManagement />}
       </main>
     </div>
   );

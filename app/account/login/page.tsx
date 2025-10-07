@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { safeLocalStorage } from "@/lib/storage";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import jwt from "jsonwebtoken";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -15,7 +16,12 @@ export default function AuthPage() {
     confirmPassword: "",
   });
   const [randomTagline, setRandomTagline] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [rememberMe, setRememberMe] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const loginTaglines = [
     "Welcome back! Missed you like cookies miss milk",
@@ -40,31 +46,175 @@ export default function AuthPage() {
     setRandomTagline(currentTaglines[randomIndex]);
   }, [isLogin]);
 
+  // Load saved credentials on component mount
+  useEffect(() => {
+    const savedEmail = safeLocalStorage.getItem("rememberedEmail");
+    const savedRememberMe = safeLocalStorage.getItem("rememberMe");
+
+    if (savedEmail && savedRememberMe === "true") {
+      setFormData((prev) => ({
+        ...prev,
+        email: savedEmail,
+      }));
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Clear errors and touched state when switching between login/signup
+  useEffect(() => {
+    setErrors({});
+    setTouched({});
+    setSubmitError("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    // Reset remember me when switching to signup
+    if (!isLogin) {
+      setRememberMe(false);
+    }
+  }, [isLogin]);
+
+  // Validation functions
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) return "Email is required";
+    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    return "";
+  };
+
+  const validateUsername = (username: string) => {
+    if (!isLogin && !username) return "Username is required";
+    if (!isLogin && username.length < 3)
+      return "Username must be at least 3 characters";
+    if (!isLogin && username.length > 20)
+      return "Username must be less than 20 characters";
+    return "";
+  };
+
+  const validatePassword = (password: string) => {
+    if (!password) return "Password is required";
+    if (!isLogin && password.length < 6)
+      return "Password must be at least 6 characters";
+    if (!isLogin && password.length > 50)
+      return "Password must be less than 50 characters";
+    if (isLogin && password.length < 1) return "Password is required";
+    return "";
+  };
+
+  const validateConfirmPassword = (
+    confirmPassword: string,
+    password: string
+  ) => {
+    if (!isLogin && !confirmPassword) return "Please confirm your password";
+    if (!isLogin && confirmPassword !== password)
+      return "Passwords do not match";
+    return "";
+  };
+
+  const validateField = (name: string, value: string) => {
+    let error = "";
+    switch (name) {
+      case "email":
+        error = validateEmail(value);
+        break;
+      case "username":
+        error = validateUsername(value);
+        break;
+      case "password":
+        error = validatePassword(value);
+        break;
+      case "confirmPassword":
+        error = validateConfirmPassword(value, formData.password);
+        break;
+    }
+    return error;
+  };
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    newErrors.email = validateEmail(formData.email);
+    newErrors.password = validatePassword(formData.password);
+
+    if (!isLogin) {
+      newErrors.username = validateUsername(formData.username);
+      newErrors.confirmPassword = validateConfirmPassword(
+        formData.confirmPassword,
+        formData.password
+      );
+    }
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error !== "");
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Real-time validation
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: error,
+      }));
+    }
+
+    // If password changes, also validate confirm password if it's been touched
+    if (name === "password" && touched.confirmPassword && !isLogin) {
+      const confirmPasswordError = validateConfirmPassword(
+        formData.confirmPassword,
+        value
+      );
+      setErrors((prev) => ({
+        ...prev,
+        confirmPassword: confirmPasswordError,
+      }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }));
+
+    const error = validateField(name, value);
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { username, email, password, confirmPassword } = formData;
+    // Clear previous submit errors
+    setSubmitError("");
 
-    if (!email || !password || (!isLogin && !username)) {
-      alert("Please fill all required fields");
-      return;
+    // Mark all fields as touched for validation
+    const allFields = ["email", "password"];
+    if (!isLogin) {
+      allFields.push("username", "confirmPassword");
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      alert("Passwords do not match");
+    const newTouched: { [key: string]: boolean } = {};
+    allFields.forEach((field) => {
+      newTouched[field] = true;
+    });
+    setTouched(newTouched);
+
+    // Validate form
+    if (!validateForm()) {
       return;
     }
-
-    setLoading(true);
 
     try {
+      const { username, email, password } = formData;
       const endpoint = isLogin ? "login" : "signup";
       const body = isLogin
         ? { email, password }
@@ -84,11 +234,27 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Something went wrong!");
+        console.error(
+          "Login/Signup failed:",
+          data.message || "Something went wrong!"
+        );
+        // Set submit error for display
+        setSubmitError(data.message || "Something went wrong!");
         return;
       }
 
       console.log("Success:", data);
+
+      // Handle remember me functionality
+      if (isLogin) {
+        if (rememberMe) {
+          safeLocalStorage.setItem("rememberedEmail", email);
+          safeLocalStorage.setItem("rememberMe", "true");
+        } else {
+          safeLocalStorage.removeItem("rememberedEmail");
+          safeLocalStorage.removeItem("rememberMe");
+        }
+      }
 
       // Save user data and token in localStorage
       safeLocalStorage.setItem("user", JSON.stringify(data.user));
@@ -112,14 +278,13 @@ export default function AuthPage() {
         window.location.href = "/";
       } else {
         // Auto-login after successful signup
-        alert("Signup successful! You are now logged in.");
+        console.log("Signup successful! You are now logged in.");
         window.location.href = "/";
       }
     } catch (err) {
-      console.error(err);
-      alert("Error connecting to server");
+      console.error("Error connecting to server:", err);
+      setSubmitError("Error connecting to server. Please try again.");
     } finally {
-      setLoading(false);
     }
   };
 
@@ -163,6 +328,13 @@ export default function AuthPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Submit Error Display */}
+          {submitError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-red-600 text-sm">{submitError}</p>
+            </div>
+          )}
+
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -173,10 +345,18 @@ export default function AuthPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  errors.username && touched.username
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
                 placeholder="Enter your cool username"
                 required
               />
+              {errors.username && touched.username && (
+                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+              )}
             </div>
           )}
 
@@ -189,25 +369,54 @@ export default function AuthPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onBlur={handleBlur}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                errors.email && touched.email
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
               placeholder="your@email.com"
               required
             />
+            {errors.email && touched.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  errors.password && touched.password
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && touched.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
 
           {!isLogin && (
@@ -215,22 +424,50 @@ export default function AuthPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    errors.confirmPassword && touched.confirmPassword
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && touched.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.confirmPassword}
+                </p>
+              )}
             </div>
           )}
 
           {isLogin && (
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <input type="checkbox" className="rounded text-blue-500" />
+                <input
+                  type="checkbox"
+                  className="rounded text-blue-500"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
               <a href="#" className="text-sm text-blue-500 hover:text-blue-700">
@@ -242,9 +479,8 @@ export default function AuthPage() {
           <button
             type="submit"
             className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all transform hover:scale-105"
-            disabled={loading}
           >
-            {loading ? "Processing..." : isLogin ? "Login" : "Sign Up"}
+            {isLogin ? "Login" : "Sign Up"}
           </button>
         </form>
 
