@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+// import { Suspense } from "react";
 import AdminProductView from "@/components/admin/AdminProductView";
 
 interface AdminProductViewPageProps {

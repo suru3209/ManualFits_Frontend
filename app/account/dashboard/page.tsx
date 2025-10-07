@@ -152,7 +152,7 @@ export default function DashboardPage() {
   const { wishlist } = useWishlist();
   const { showToast } = useToast();
   const [user, setUser] = useState<UserData | null>(null);
-  const [, setRecentOrders] = useState<Order[]>([]);
+  // const [, setRecentOrders] = useState<Order[]>([]);
   const [token, setToken] = useState<string>("");
   const [activeSection, setActiveSection] = useState("personal-info");
   const [userAddresses, setUserAddresses] = useState<Address[]>([]);
@@ -197,7 +197,7 @@ export default function DashboardPage() {
     comment: "",
     images: [] as string[],
   });
-  const [, setUploadedImages] = useState<string[]>([]);
+  // const [, setUploadedImages] = useState<string[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
@@ -742,7 +742,7 @@ export default function DashboardPage() {
         const uploadedUrls = uploadResult.data.successful.map(
           (item) => item.url
         );
-        setUploadedImages((prev) => [...prev, ...uploadedUrls]);
+        // setUploadedImages((prev) => [...prev, ...uploadedUrls]);
         setNewReview((prev) => ({
           ...prev,
           images: [...prev.images, ...uploadedUrls],
@@ -998,8 +998,8 @@ export default function DashboardPage() {
           },
         });
         if (!res.ok) throw new Error("Failed to fetch orders");
-        const data = await res.json();
-        setRecentOrders(data.orders);
+        // const data = await res.json();
+        // setRecentOrders(data.orders);
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {

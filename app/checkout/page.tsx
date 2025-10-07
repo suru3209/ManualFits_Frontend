@@ -194,7 +194,6 @@ export default function CheckoutPage() {
         user !== "null"
       );
       setIsLoggedIn(isLoggedIn);
-      setIsLoading(false);
 
       if (isLoggedIn) {
         fetchUserAddresses();

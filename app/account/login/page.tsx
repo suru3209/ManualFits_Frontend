@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { safeLocalStorage } from "@/lib/storage";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import jwt from "jsonwebtoken";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function AuthPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: "",

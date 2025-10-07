@@ -44,12 +44,12 @@ import {
   Plus,
   Edit,
   Trash2,
-  Shield,
+  // Shield,
   Eye,
   EyeOff,
-  Settings,
+  // Settings,
   UserCheck,
-  UserX,
+  // UserX,
   Mail,
   Calendar,
   Key,
@@ -338,8 +338,9 @@ export default function AdminManagement() {
       });
       setShowCreateDialog(false);
       fetchAdmins(currentPage);
-    } catch (error: any) {
-      setCreateError(error.message || "Failed to create admin");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      setCreateError(errorObj.message || "Failed to create admin");
     } finally {
       setCreateLoading(false);
     }
@@ -370,8 +371,9 @@ export default function AdminManagement() {
       setEditingAdmin(null);
       setShowEditDialog(false);
       fetchAdmins(currentPage);
-    } catch (error: any) {
-      setEditError(error.message || "Failed to update admin");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      setEditError(errorObj.message || "Failed to update admin");
     } finally {
       setEditLoading(false);
     }

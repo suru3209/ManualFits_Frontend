@@ -4,7 +4,7 @@ import { Product } from "../../types/types";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { Filter, X, SlidersHorizontal, Heart, ShoppingBag } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import DynamicBreadcrumb from "@/lib/breadcrumb";

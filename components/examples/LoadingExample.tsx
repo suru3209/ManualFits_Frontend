@@ -8,38 +8,35 @@ import {
   Spinner,
   Skeleton,
   ProductSkeleton,
-  useGlobalLoading,
 } from "@/components/ui/loading";
 import { useLoading } from "@/hooks/useLoading";
 
 export default function LoadingExample() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [showPage, setShowPage] = useState(false);
-  const { startLoading, stopLoading, withLoading } = useLoading();
-  const { startLoading: startGlobal, stopLoading: stopGlobal } =
-    useGlobalLoading();
+  // const { startLoading, stopLoading, withLoading } = useLoading();
 
   // Example of using withLoading hook
-  const simulateAsyncOperation = withLoading(async (delay: number = 2000) => {
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return "Operation completed!";
-  });
+  // const simulateAsyncOperation = withLoading(async (delay: number = 2000) => {
+  //   await new Promise((resolve) => setTimeout(resolve, delay));
+  //   return "Operation completed!";
+  // });
 
-  const handleAsyncOperation = async () => {
-    try {
-      const result = await simulateAsyncOperation(3000);
-      console.log(result);
-    } catch (error) {
-      console.error("Operation failed:", error);
-    }
-  };
+  // const handleAsyncOperation = async () => {
+  //   try {
+  //     const result = await simulateAsyncOperation(3000);
+  //     console.log(result);
+  //   } catch (error) {
+  //     console.error("Operation failed:", error);
+  //   }
+  // };
 
-  const handleGlobalLoading = () => {
-    startGlobal("Processing your request...");
-    setTimeout(() => {
-      stopGlobal();
-    }, 3000);
-  };
+  // const handleGlobalLoading = () => {
+  //   startGlobal("Processing your request...");
+  //   setTimeout(() => {
+  //     stopGlobal();
+  //   }, 3000);
+  // };
 
   if (showPage) {
     return <LoadingPage message="Loading example page..." />;
@@ -97,13 +94,14 @@ export default function LoadingExample() {
             <CardTitle>Interactive Loading</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={handleAsyncOperation} className="w-full">
+            <Button onClick={() => {}} className="w-full" disabled>
               Simulate Async Operation
             </Button>
             <Button
-              onClick={handleGlobalLoading}
+              onClick={() => {}}
               variant="outline"
               className="w-full"
+              disabled
             >
               Global Loading Overlay
             </Button>

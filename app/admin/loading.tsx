@@ -1,4 +1,4 @@
-import { LoadingPage, Skeleton, TableSkeleton } from "@/components/ui/loading";
+import { Skeleton, TableSkeleton } from "@/components/ui/loading";
 
 export default function AdminLoading() {
   return (

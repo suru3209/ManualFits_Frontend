@@ -1,8 +1,4 @@
-import {
-  LoadingPage,
-  ProductSkeleton,
-  Skeleton,
-} from "@/components/ui/loading";
+import { ProductSkeleton, Skeleton } from "@/components/ui/loading";
 
 export default function SearchLoading() {
   return (

@@ -124,22 +124,28 @@ export const adminApi = {
           `Login failed: ${response.status} ${response.statusText}`;
 
         // Create a more detailed error object
-        const error = new Error(errorMessage);
-        (error as any).status = response.status;
-        (error as any).response = response;
+        const error = new Error(errorMessage) as Error & {
+          status?: number;
+          response?: Response;
+        };
+        error.status = response.status;
+        error.response = response;
 
         throw error;
       }
 
       return response.json();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If it's already our custom error, re-throw it
-      if (error.status) {
+      const errorObj = error as { status?: number };
+      if (errorObj.status) {
         throw error;
       }
 
       // Handle network errors or other issues
-      throw new Error(`Network error: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Network error: ${errorMessage}`);
     }
   },
 

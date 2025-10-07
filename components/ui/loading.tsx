@@ -63,7 +63,7 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
 Skeleton.displayName = "Skeleton";
 
 // Loading page component
-interface LoadingPageProps {
+interface LoadingPageProps extends React.HTMLAttributes<HTMLDivElement> {
   message?: string;
   showSpinner?: boolean;
   variant?: "default" | "minimal" | "card";
@@ -134,7 +134,7 @@ const LoadingPage = React.forwardRef<HTMLDivElement, LoadingPageProps>(
 LoadingPage.displayName = "LoadingPage";
 
 // Loading overlay component
-interface LoadingOverlayProps {
+interface LoadingOverlayProps extends React.HTMLAttributes<HTMLDivElement> {
   isVisible: boolean;
   message?: string;
   transparent?: boolean;

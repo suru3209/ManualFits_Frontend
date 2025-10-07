@@ -1,4 +1,5 @@
-import { LoadingPage, ProductSkeleton } from "@/components/ui/loading";
+import { ProductSkeleton } from "@/components/ui/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WishlistLoading() {
   return (

@@ -1,4 +1,4 @@
-import { LoadingPage, Skeleton } from "@/components/ui/loading";
+import { Skeleton } from "@/components/ui/loading";
 
 export default function CartLoading() {
   return (

@@ -5,7 +5,7 @@ import { useCart } from "../../context/CartContext";
 import { Heart, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import DynamicBreadcrumb from "@/lib/breadcrumb";
 import Link from "next/link";
 

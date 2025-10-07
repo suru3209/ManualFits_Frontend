@@ -92,6 +92,7 @@ export default function CustomerSupportSection({
   });
   const [newMessage, setNewMessage] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [socket, setSocket] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isTyping, setIsTyping] = useState(false);

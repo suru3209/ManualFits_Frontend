@@ -13,8 +13,8 @@ import {
   RotateCcw,
   Shield,
   Check,
-  ChevronLeft,
-  ChevronRight,
+  // ChevronLeft,
+  // ChevronRight,
   ShoppingBag,
   MessageCircle,
   Tag,
@@ -24,13 +24,12 @@ import {
   X,
   Edit,
   Trash2,
-  User,
+  // User,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
 import { useWishlist } from "../../../context/WishlistContext";
 import { useToast } from "../../../context/ToastContext";
 import { buildApiUrl } from "@/lib/api";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +90,7 @@ export default function ProductPage() {
   const [wishlist, setWishlist] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
-  const [, setMainImage] = useState<string | undefined>(undefined);
+  // const [, setMainImage] = useState<string | undefined>(undefined);
   const [qty, setQty] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -102,7 +101,7 @@ export default function ProductPage() {
     comment: "",
     images: [] as string[],
   });
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  // const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [productReviews, setProductReviews] = useState<Review[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<AnyProduct[]>([]);
@@ -359,7 +358,7 @@ export default function ProductPage() {
         const uploadedUrls = uploadResult.data.successful.map(
           (item) => item.url
         );
-        setUploadedImages((prev) => [...prev, ...uploadedUrls]);
+        // setUploadedImages((prev) => [...prev, ...uploadedUrls]);
         setNewReview((prev) => ({
           ...prev,
           images: [...prev.images, ...uploadedUrls],
@@ -376,21 +375,21 @@ export default function ProductPage() {
     }
   };
 
-  const nextImage = () => {
-    if (product?.images) {
-      setCurrentImageIndex((prev) =>
-        prev === product.images.length - 1 ? 0 : prev + 1
-      );
-    }
-  };
+  // const nextImage = () => {
+  //   if (product?.images) {
+  //     setCurrentImageIndex((prev) =>
+  //       prev === product.images.length - 1 ? 0 : prev + 1
+  //     );
+  //   }
+  // };
 
-  const prevImage = () => {
-    if (product?.images) {
-      setCurrentImageIndex((prev) =>
-        prev === 0 ? product.images.length - 1 : prev - 1
-      );
-    }
-  };
+  // const prevImage = () => {
+  //   if (product?.images) {
+  //     setCurrentImageIndex((prev) =>
+  //       prev === 0 ? product.images.length - 1 : prev - 1
+  //     );
+  //   }
+  // };
 
   const shareProduct = () => {
     if (navigator.share) {
@@ -455,7 +454,7 @@ export default function ProductPage() {
           setProduct(found);
           setSelectedSize(found.sizes?.[0]?.size || found.size?.[0] || "");
           setSelectedColor(found.colors?.[0] || found.color?.[0] || "");
-          setMainImage(found.images?.[0]);
+          // setMainImage(found.images?.[0]);
           setCurrentImageIndex(0);
 
           // Get related products from same category
@@ -800,19 +799,7 @@ export default function ProductPage() {
     ));
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen z-50 flex flex-col items-center justify-center bg-gray-50 fixed inset-0">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-700 text-xl mb-4">Loading Product...</p>
-          <Progress value={63} className="opacity-70 w-64" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!product && !loading) {
+  if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="max-w-md mx-auto">

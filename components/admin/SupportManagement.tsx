@@ -108,6 +108,7 @@ export default function SupportManagement() {
     category: "",
     search: "",
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [socket, setSocket] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);

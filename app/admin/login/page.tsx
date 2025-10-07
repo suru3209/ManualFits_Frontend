@@ -53,34 +53,35 @@ export default function AdminLoginPage() {
 
       // Redirect to admin dashboard
       router.push("/admin");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Admin login error:", error);
 
       // Handle specific error cases based on status codes
-      if (error.status === 401) {
+      const errorObj = error as { status?: number; message?: string };
+      if (errorObj.status === 401) {
         setError(
           "Invalid username or password. Please check your credentials."
         );
-      } else if (error.status === 404) {
+      } else if (errorObj.status === 404) {
         setError(
           "Admin account not found. Please contact system administrator."
         );
-      } else if (error.status === 403) {
+      } else if (errorObj.status === 403) {
         setError("Access denied. Your account may not have admin privileges.");
-      } else if (error.status === 500) {
+      } else if (errorObj.status === 500) {
         setError("Server error. Please try again later.");
-      } else if (error.message?.includes("Network")) {
+      } else if (errorObj.message?.includes("Network")) {
         setError("Network error. Please check your connection and try again.");
       } else if (
-        error.message?.includes("Invalid") ||
-        error.message?.includes("invalid")
+        errorObj.message?.includes("Invalid") ||
+        errorObj.message?.includes("invalid")
       ) {
         setError(
           "Invalid credentials. Please check your username and password."
         );
       } else {
         setError(
-          error.message ||
+          errorObj.message ||
             "Login failed. Please check your credentials and try again."
         );
       }

@@ -292,13 +292,6 @@ function SearchPageContent() {
     );
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen bg-gray-300 flex items-start justify-center">
-        <p className="text-center py-20 text-gray-500">Loading results...</p>
-      </div>
-    );
-
   return (
     <div className="min-h-screen mt-10 lg:mt-15 bg-gray-300">
       <DynamicBreadcrumb />

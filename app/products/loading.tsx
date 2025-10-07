@@ -1,4 +1,4 @@
-import { LoadingPage, ProductSkeleton } from "@/components/ui/loading";
+import { ProductSkeleton } from "@/components/ui/loading";
 
 export default function ProductsLoading() {
   return (
