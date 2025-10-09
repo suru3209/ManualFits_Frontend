@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Star, MessageCircle } from "lucide-react";
+import { ShoppingBag, Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
@@ -70,10 +70,7 @@ export default function MyOrdersSection({
 }: MyOrdersSectionProps) {
   const router = useRouter();
 
-  const handleProductClick = (
-    productId: string | undefined,
-    productName: string
-  ) => {
+  const handleProductClick = (productId: string | undefined) => {
     if (productId) {
       router.push(`/products/${productId}`);
     }
@@ -120,8 +117,7 @@ export default function MyOrdersSection({
                         if (order.items?.[0]?.product) {
                           handleProductClick(
                             order.items[0].product._id ||
-                              order.items[0].product.id,
-                            order.items[0].product.name
+                              order.items[0].product.id
                           );
                         }
                       }}
@@ -204,8 +200,7 @@ export default function MyOrdersSection({
                                 className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() =>
                                   handleProductClick(
-                                    itemData.product._id || itemData.product.id,
-                                    itemData.product.name
+                                    itemData.product._id || itemData.product.id
                                   )
                                 }
                               >
@@ -226,8 +221,7 @@ export default function MyOrdersSection({
                                   onClick={() =>
                                     handleProductClick(
                                       itemData.product._id ||
-                                        itemData.product.id,
-                                      itemData.product.name
+                                        itemData.product.id
                                     )
                                   }
                                 >
@@ -272,33 +266,33 @@ export default function MyOrdersSection({
                     {/* Order Actions */}
                     <div className="pt-4 border-t">
                       <div className="flex flex-col sm:flex-row gap-3">
-                        <button
+                        <Button
                           onClick={() => onTrackOrder(order)}
                           className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm font-medium"
                         >
                           Track Order
-                        </button>
+                        </Button>
 
                         {/* Conditional buttons based on order status */}
                         {(order.status === "pending" ||
                           order.status === "shipped") && (
-                          <button
+                          <Button
                             onClick={() => onCancelOrder(order._id)}
                             className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-medium"
                           >
                             Cancel Order
-                          </button>
+                          </Button>
                         )}
 
                         {/* Show return/replace button only for delivered orders within 5 days */}
                         {order.status === "delivered" &&
                           isWithinReturnWindow(order) && (
-                            <button
+                            <Button
                               onClick={() => onReturnReplace(order._id)}
                               className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm font-medium"
                             >
                               Return/Replace
-                            </button>
+                            </Button>
                           )}
 
                         {/* Show review button for delivered orders - One review per order */}
@@ -312,18 +306,18 @@ export default function MyOrdersSection({
                               if (hasOrderReview) {
                                 // Order has been reviewed - show disabled button
                                 return (
-                                  <button
+                                  <Button
                                     disabled
                                     className="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed"
                                   >
                                     <Star className="w-4 h-4" />
                                     Review Submitted
-                                  </button>
+                                  </Button>
                                 );
                               } else {
                                 // Order not reviewed - show active review button
                                 return (
-                                  <button
+                                  <Button
                                     onClick={() =>
                                       onWriteReview(order._id, order.items)
                                     }
@@ -331,7 +325,7 @@ export default function MyOrdersSection({
                                   >
                                     <Star className="w-4 h-4" />
                                     Write Review for Order
-                                  </button>
+                                  </Button>
                                 );
                               }
                             })()}
@@ -399,12 +393,12 @@ export default function MyOrdersSection({
                   )?.label
                 }`}
           </p>
-          <Link
-            href="/products"
-            className="mt-4 inline-block bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
+          <Button
+            asChild
+            className="mt-4 bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
           >
-            Start Shopping
-          </Link>
+            <Link href="/products">Start Shopping</Link>
+          </Button>
         </div>
       )}
     </div>

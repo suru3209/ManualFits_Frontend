@@ -103,12 +103,12 @@ const Skiper29 = () => {
               Wardrobe
             </h1>
           </Link>
-          <Link href="/about">
+          <Link href="/privacy">
             <h1 className="font-custom w-full cursor-pointer text-center text-4xl leading-[0.9] opacity-20 transition-all ease-in-out hover:opacity-100">
               about
             </h1>
           </Link>
-          <Link href="/contact">
+          <Link href="/privacy">
             <h1 className="font-custom w-full cursor-pointer text-center text-4xl leading-[0.9] opacity-20 transition-all ease-in-out hover:opacity-100">
               contact
             </h1>

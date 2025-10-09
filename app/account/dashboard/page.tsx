@@ -52,6 +52,8 @@ import {
 } from "@/components/payment";
 import DynamicBreadcrumb from "@/lib/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 // import { SimpleProfileImageUpload } from "@/components/ui/SimpleProfileImageUpload";
 import {
   PersonalInfoSection,
@@ -152,6 +154,7 @@ export default function DashboardPage() {
   const { wishlist } = useWishlist();
   const { showToast } = useToast();
   const [user, setUser] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   // const [, setRecentOrders] = useState<Order[]>([]);
   const [token, setToken] = useState<string>("");
   const [activeSection, setActiveSection] = useState("personal-info");
@@ -333,6 +336,7 @@ export default function DashboardPage() {
       const currentToken = safeLocalStorage.getItem("token");
 
       if (!storedUser || !currentToken) {
+        setIsLoading(false);
         window.location.href = "/account/login";
         return;
       }
@@ -349,6 +353,7 @@ export default function DashboardPage() {
           // Token is invalid, clear storage and redirect
           safeLocalStorage.removeItem("token");
           safeLocalStorage.removeItem("user");
+          setIsLoading(false);
           window.location.href = "/account/login";
           return;
         }
@@ -358,6 +363,7 @@ export default function DashboardPage() {
         console.error("Token validation failed:", error);
         safeLocalStorage.removeItem("token");
         safeLocalStorage.removeItem("user");
+        setIsLoading(false);
         window.location.href = "/account/login";
         return;
       }
@@ -379,6 +385,9 @@ export default function DashboardPage() {
       // Fetch orders and cart for statistics
       await fetchUserOrders();
       await fetchUserCart();
+
+      // Set loading to false after all data is loaded
+      setIsLoading(false);
     };
 
     loadUserData();
@@ -452,6 +461,8 @@ export default function DashboardPage() {
         setUser(data.user);
         // Update localStorage
         safeLocalStorage.setItem("user", JSON.stringify(data.user));
+        // Dispatch custom event to notify navbar of user update
+        window.dispatchEvent(new CustomEvent("userUpdated"));
         // Reset profile image state
         setProfileImageUrl("");
         setProfileImagePublicId("");
@@ -1193,6 +1204,19 @@ export default function DashboardPage() {
     }
   };
 
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login message only after loading is complete and user is not authenticated
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -1856,21 +1880,22 @@ export default function DashboardPage() {
               undone.
             </p>
             <div className="flex space-x-3">
-              <button
+              <Button
                 onClick={() => {
                   setShowCancelConfirm(false);
                   setSelectedOrderId("");
                 }}
+                variant="outline"
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
               >
                 No
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={confirmCancelOrder}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 Yes, Cancel Order
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1888,21 +1913,22 @@ export default function DashboardPage() {
               order?
             </p>
             <div className="flex space-x-3">
-              <button
+              <Button
                 onClick={() => {
                   setShowReturnConfirm(false);
                   setSelectedOrderId("");
                 }}
+                variant="outline"
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
               >
                 No
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={confirmReturnReplace}
                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
                 Yes, Submit Request
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1927,15 +1953,17 @@ export default function DashboardPage() {
               <h3 className="text-md font-semibold text-gray-900">
                 Track Order
               </h3>
-              <button
+              <Button
                 onClick={() => {
                   setShowTrackPopup(false);
                   setSelectedOrderForTrack(null);
                 }}
+                variant="ghost"
+                size="sm"
                 className="text-gray-500 hover:text-gray-700"
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
             {/* Track content */}
@@ -2055,9 +2083,9 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-600 mb-3">
                   Need help with your order?
                 </p>
-                <button className="bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-medium">
+                <Button className="bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-medium">
                   Contact Support
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -2075,7 +2103,7 @@ export default function DashboardPage() {
                     ? "Edit Review"
                     : `Write a Review for ${reviewProductName}`}
                 </h3>
-                <button
+                <Button
                   onClick={() => {
                     setShowReviewModal(false);
                     setNewReview({
@@ -2085,25 +2113,29 @@ export default function DashboardPage() {
                       images: [],
                     });
                   }}
+                  variant="ghost"
+                  size="sm"
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <X className="w-5 h-5" />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label className="block text-sm font-medium text-gray-700 mb-2">
                     Rating
-                  </label>
+                  </Label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <button
+                      <Button
                         key={star}
                         onClick={() =>
                           setNewReview({ ...newReview, rating: star })
                         }
-                        className="text-2xl"
+                        variant="ghost"
+                        size="sm"
+                        className="text-2xl p-0"
                       >
                         <Star
                           className={`w-6 h-6 ${
@@ -2112,19 +2144,19 @@ export default function DashboardPage() {
                               : "text-gray-300"
                           }`}
                         />
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label
+                  <Label
                     htmlFor="review-title"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Review Title
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     id="review-title"
                     type="text"
                     value={newReview.title}
@@ -2137,12 +2169,12 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label
+                  <Label
                     htmlFor="review-comment"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Your Review
-                  </label>
+                  </Label>
                   <textarea
                     id="review-comment"
                     value={newReview.comment}
@@ -2156,9 +2188,9 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Label className="block text-sm font-medium text-gray-700 mb-1">
                     Review Images (Optional)
-                  </label>
+                  </Label>
                   <p className="text-xs text-gray-500 mb-2">
                     Maximum 4 images, 5MB each
                   </p>
@@ -2189,7 +2221,7 @@ export default function DashboardPage() {
                               height={64}
                               className="w-16 h-16 object-cover rounded-lg"
                             />
-                            <button
+                            <Button
                               onClick={() => {
                                 const newImages = newReview.images.filter(
                                   (_, i) => i !== index
@@ -2199,10 +2231,12 @@ export default function DashboardPage() {
                                   images: newImages,
                                 });
                               }}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 p-0"
                             >
                               ×
-                            </button>
+                            </Button>
                           </div>
                         ))}
                       </div>

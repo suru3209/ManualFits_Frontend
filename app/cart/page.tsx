@@ -26,8 +26,8 @@ export default function CartPage() {
 
   if (cartItems.length === 0)
     return (
-      <div className="mx-auto  p-5 mt-10 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
-        <div className="flex lg:pt-60 lg:pb-50 lg:w-330 flex-col items-center justify-center">
+      <div className="mx-auto  p-5 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
+        <div className="flex lg:pt-50 lg:pb-50 lg:w-330 flex-col items-center justify-center">
           <span className="absolute top-16 bg-gray-300 w-screen">
             <DynamicBreadcrumb />
           </span>
@@ -44,8 +44,10 @@ export default function CartPage() {
     );
 
   return (
-    <div className="mx-auto p-5 lg:p-20 bg-gray-300 min-h-screen mt-15">
-      <DynamicBreadcrumb />
+    <div className="mx-auto px-5 pb-10 bg-gray-300 min-h-screen lg:px-20">
+      <div className="lg:mb-6 lg:-ml-10">
+        <DynamicBreadcrumb />
+      </div>
 
       {/* <h1 className="text-3xl font-bold mb-6">Your Cart</h1> */}
 

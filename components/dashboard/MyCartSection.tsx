@@ -4,10 +4,8 @@ import React, { useState, useEffect } from "react";
 import { ShoppingBag, Plus, Minus } from "lucide-react";
 import { useCart, CartItem } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
-import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
-import { safeLocalStorage } from "@/lib/storage";
+import { Button } from "@/components/ui/button";
 import { TrashIcon } from "../ui/skiper-ui/skiper42";
-import { Skeleton } from "../ui/loading";
 
 interface MyCartSectionProps {
   userCart: CartItem[];
@@ -18,8 +16,7 @@ export default function MyCartSection({
   userCart,
   onCartUpdate,
 }: MyCartSectionProps) {
-  const { cartItems, removeFromCart, increaseQty, decreaseQty, totalItems } =
-    useCart();
+  const { cartItems, removeFromCart, increaseQty, decreaseQty } = useCart();
   const [cartData, setCartData] = useState<CartItem[]>(userCart);
   const router = useRouter();
 
@@ -160,32 +157,38 @@ export default function MyCartSection({
                   {/* Quantity Controls */}
                   <div className="flex flex-col items-center space-y-2">
                     <div className="flex items-center space-x-2">
-                      <button
+                      <Button
                         onClick={() => handleDecreaseQty(itemId)}
                         disabled={quantity <= 1}
-                        className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        variant="outline"
+                        size="sm"
+                        className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center p-0"
                       >
                         <Minus className="w-3 h-3" />
-                      </button>
+                      </Button>
                       <span className="w-8 text-center font-medium">
                         {quantity}
                       </span>
-                      <button
+                      <Button
                         onClick={() => handleIncreaseQty(itemId)}
-                        className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        variant="outline"
+                        size="sm"
+                        className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center p-0"
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Remove Button */}
-                    <button
+                    <Button
                       onClick={() => handleRemoveItem(itemId)}
+                      variant="ghost"
+                      size="sm"
                       className="text-red-600 hover:text-red-800 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
                     >
                       <TrashIcon />
                       <span>Remove</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -209,12 +212,12 @@ export default function MyCartSection({
                 <span className="text-lg sm:text-xl font-bold">
                   Total Price: ₹{calculateTotalPrice()}
                 </span>
-                <button
+                <Button
                   onClick={handleProceedToCheckout}
                   className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto"
                 >
                   Proceed to Checkout
-                </button>
+                </Button>
               </div>
             </div>
           </div>

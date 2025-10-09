@@ -3,6 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { CreditCard as CardIcon, Edit3 } from "lucide-react";
 import { cardApi } from "@/lib/paymentApi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
 
 interface SavedCard {
@@ -100,8 +105,6 @@ export default function SavedCardsSection() {
 
   // Handle delete
   const handleDelete = async (cardId: string) => {
-    if (!confirm("Are you sure you want to delete this card?")) return;
-
     try {
       setLoading(true);
       await cardApi.delete(cardId);
@@ -134,7 +137,7 @@ export default function SavedCardsSection() {
     <div className="bg-white shadow-md rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Saved Cards</h2>
-        <button
+        <Button
           onClick={() => {
             setEditingCard(null);
             setForm({
@@ -153,7 +156,7 @@ export default function SavedCardsSection() {
         >
           <CardIcon className="w-4 h-4" />
           <span>Add Card</span>
-        </button>
+        </Button>
       </div>
 
       {/* Add/Edit Form */}
@@ -165,9 +168,9 @@ export default function SavedCardsSection() {
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Card Type *
-                </label>
+                </Label>
                 <select
                   value={form.card_type}
                   onChange={(e) =>
@@ -184,9 +187,9 @@ export default function SavedCardsSection() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Brand *
-                </label>
+                </Label>
                 <select
                   value={form.brand}
                   onChange={(e) => setForm({ ...form, brand: e.target.value })}
@@ -202,10 +205,10 @@ export default function SavedCardsSection() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Last 4 Digits *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={form.last4}
                   onChange={(e) => setForm({ ...form, last4: e.target.value })}
@@ -217,10 +220,10 @@ export default function SavedCardsSection() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Cardholder Name *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={form.cardholder_name}
                   onChange={(e) =>
@@ -233,9 +236,9 @@ export default function SavedCardsSection() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Expiry Month *
-                </label>
+                </Label>
                 <select
                   value={form.expiry_month}
                   onChange={(e) =>
@@ -254,9 +257,9 @@ export default function SavedCardsSection() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Expiry Year *
-                </label>
+                </Label>
                 <select
                   value={form.expiry_year}
                   onChange={(e) =>
@@ -278,7 +281,7 @@ export default function SavedCardsSection() {
                 </select>
               </div>
               <div className="md:col-span-2 flex items-center">
-                <label className="flex items-center">
+                <Label className="flex items-center">
                   <input
                     type="checkbox"
                     checked={form.is_default}
@@ -291,19 +294,20 @@ export default function SavedCardsSection() {
                   <span className="text-sm text-gray-700">
                     Set as default card
                   </span>
-                </label>
+                </Label>
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
-              <button
+              <Button
                 type="button"
                 onClick={resetForm}
+                variant="outline"
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
                 disabled={loading}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-900 disabled:opacity-50"
                 disabled={loading}
@@ -313,7 +317,7 @@ export default function SavedCardsSection() {
                   : editingCard
                   ? "Update Card"
                   : "Add Card"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -328,63 +332,73 @@ export default function SavedCardsSection() {
       ) : cards.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {cards.map((card) => (
-            <div
+            <Card
               key={card.card_id}
-              className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-emerald-50"
+              className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center space-x-2">
-                  <CardIcon className="w-5 h-5 text-green-600" />
-                  <h3 className="font-semibold text-gray-800">
-                    {card.card_type}
-                  </h3>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center space-x-2">
+                    <CardIcon className="w-5 h-5 text-green-600" />
+                    <CardTitle className="text-gray-800">
+                      {card.card_type}
+                    </CardTitle>
+                  </div>
+                  {card.is_default && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-gray-100 text-gray-800"
+                    >
+                      Default
+                    </Badge>
+                  )}
                 </div>
-                {card.is_default && (
-                  <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-medium">
-                    Default
-                  </span>
-                )}
-              </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2 mb-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Card Number</p>
+                    <p className="font-mono text-lg font-bold text-gray-800">
+                      {card.brand} •••• {card.last4}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Cardholder</p>
+                    <p className="text-gray-700">{card.cardholder_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Expires</p>
+                    <p className="text-gray-700">
+                      {String(card.expiry_month).padStart(2, "0")}/
+                      {card.expiry_year}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="space-y-2 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">Card Number</p>
-                  <p className="font-mono text-lg font-bold text-gray-800">
-                    {card.brand} •••• {card.last4}
-                  </p>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    onClick={() => handleEdit(card)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 hover:text-gray-800 p-1"
+                    title="Edit Card"
+                    disabled={loading}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(card.card_id)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-800 p-1"
+                    title="Delete Card"
+                    disabled={loading}
+                  >
+                    <TrashIcon />
+                  </Button>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Cardholder</p>
-                  <p className="text-gray-700">{card.cardholder_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Expires</p>
-                  <p className="text-gray-700">
-                    {String(card.expiry_month).padStart(2, "0")}/
-                    {card.expiry_year}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => handleEdit(card)}
-                  className="text-gray-600 hover:text-gray-800 p-1"
-                  title="Edit Card"
-                  disabled={loading}
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(card.card_id)}
-                  className="text-red-600 hover:text-red-800 p-1"
-                  title="Delete Card"
-                  disabled={loading}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (

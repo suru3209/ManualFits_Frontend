@@ -3,11 +3,27 @@ export const getApiBaseUrl = (): string => {
   // Check if we're in development or production
   if (typeof window !== "undefined") {
     // Client-side: use environment variable or fallback
-    return process.env.NEXT_PUBLIC_API_BASE_URL || "api.manualfits.com";
+    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (envUrl) return envUrl;
+
+    // Development fallback
+    if (process.env.NODE_ENV === "development") {
+      return "http://localhost:8080";
+    }
+
+    return "api.manualfits.com";
   }
 
   // Server-side: use environment variable or fallback
-  return process.env.NEXT_PUBLIC_API_BASE_URL || "api.manualfits.com";
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (envUrl) return envUrl;
+
+  // Development fallback
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:8080";
+  }
+
+  return "api.manualfits.com";
 };
 
 // API endpoints

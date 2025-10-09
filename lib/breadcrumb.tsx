@@ -108,7 +108,7 @@ export default function DynamicBreadcrumb() {
   };
 
   return (
-    <div className="pl-2 mb-4">
+    <div className="pl-2">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-4">
           {/* Back Button */}

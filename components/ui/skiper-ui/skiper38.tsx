@@ -577,6 +577,33 @@ const AppleSearch = () => (
   </svg>
 );
 
+const UserProfileIcon = ({
+  isLoggedIn,
+  userProfile,
+  className = "",
+}: {
+  isLoggedIn: boolean;
+  userProfile: { image: string } | null;
+  className?: string;
+}) => {
+  // console.log("UserProfileIcon - isLoggedIn:", isLoggedIn);
+  // console.log("UserProfileIcon - userProfile:", userProfile);
+  // console.log("UserProfileIcon - userProfile?.image:", userProfile?.image);
+
+  if (isLoggedIn && userProfile?.image && userProfile.image.trim() !== "") {
+    // console.log("UserProfileIcon - Showing profile image:", userProfile.image);
+    return (
+      <img
+        src={userProfile.image}
+        alt="Profile"
+        className={`rounded-full object-cover ${className}`}
+      />
+    );
+  }
+  // console.log("UserProfileIcon - Showing CircleUser icon");
+  return <CircleUser className={`opacity-79 ${className}`} />;
+};
+
 const AppleBag = () => (
   <svg
     className="h-12 lg:h-15"
@@ -601,6 +628,7 @@ const MobileMenu = ({
   setQuery,
   handleKeyDown,
   mobileMenuRef,
+  userProfile,
 }: {
   items: typeof NAVIGATION_ITEMS;
   onCloseMenu: () => void;
@@ -615,6 +643,7 @@ const MobileMenu = ({
   setQuery: (query: string) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   mobileMenuRef: React.RefObject<HTMLDivElement | null>;
+  userProfile: { image: string } | null;
 }) => (
   <div
     ref={mobileMenuRef}
@@ -669,7 +698,11 @@ const MobileMenu = ({
                 href={isLoggedIn ? "/account/dashboard" : "/account/login"}
                 onClick={onCloseMenu}
               >
-                <CircleUser className="opacity-79 size-6" />
+                <UserProfileIcon
+                  isLoggedIn={isLoggedIn}
+                  userProfile={userProfile}
+                  className="w-5 h-5"
+                />
               </Link>
             </TooltipTrigger>
           </Tooltip>
@@ -752,11 +785,99 @@ const AppleNavbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [showTooltip, setShowTooltip] = useState(true);
+  const [userProfile, setUserProfile] = useState<{ image: string } | null>(
+    null
+  );
 
   useEffect(() => {
     setIsHydrated(true);
     const user = localStorage.getItem("user");
     setIsLoggedIn(!!user);
+
+    // Load user profile data if logged in
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        // console.log("Navbar - User data from localStorage:", userData);
+        // console.log("Navbar - User image:", userData.image);
+        // console.log("Navbar - Full user object keys:", Object.keys(userData));
+
+        // For testing: if no image, try to use a default avatar or check other possible image fields
+        let imageUrl = userData.image || "";
+
+        // Check if there are other possible image field names
+        if (!imageUrl) {
+          const possibleImageFields = [
+            "profileImage",
+            "avatar",
+            "profile_picture",
+            "profilePicture",
+          ];
+          for (const field of possibleImageFields) {
+            if (userData[field] && userData[field].trim() !== "") {
+              imageUrl = userData[field];
+              console.log(
+                `Navbar - Found image in field '${field}':`,
+                imageUrl
+              );
+              break;
+            }
+          }
+        }
+
+        // If no image, leave it empty (will show CircleUser icon)
+
+        // console.log("Navbar - Final image URL:", imageUrl);
+        setUserProfile({ image: imageUrl });
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+
+    // Listen for localStorage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user" && e.newValue) {
+        try {
+          const userData = JSON.parse(e.newValue);
+          console.log(
+            "Navbar - User data updated from localStorage:",
+            userData
+          );
+          setUserProfile({ image: userData.image || "" });
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error("Error parsing updated user data:", error);
+        }
+      } else if (e.key === "user" && !e.newValue) {
+        // User logged out
+        setUserProfile(null);
+        setIsLoggedIn(false);
+      }
+    };
+
+    // Listen for custom user update events (from same tab)
+    const handleUserUpdate = () => {
+      const user = localStorage.getItem("user");
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          console.log(
+            "Navbar - User data updated from custom event:",
+            userData
+          );
+          setUserProfile({ image: userData.image || "" });
+        } catch (error) {
+          console.error("Error parsing updated user data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("userUpdated", handleUserUpdate);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userUpdated", handleUserUpdate);
+    };
   }, []);
 
   // Tooltip timer - toggle every 3 seconds
@@ -912,7 +1033,11 @@ const AppleNavbar = () => {
                           isLoggedIn ? "/account/dashboard" : "/account/login"
                         }
                       >
-                        <CircleUser className="opacity-79" />
+                        <UserProfileIcon
+                          isLoggedIn={isLoggedIn}
+                          userProfile={userProfile}
+                          className="opacity-79 w-6 h-6"
+                        />
                       </Link>
                     </TooltipTrigger>
                     {!isLoggedIn && (
@@ -1012,6 +1137,7 @@ const AppleNavbar = () => {
               setQuery={setQuery}
               handleKeyDown={handleKeyDown}
               mobileMenuRef={mobileMenuRef}
+              userProfile={userProfile}
             />
           )}
         </AnimatePresence>

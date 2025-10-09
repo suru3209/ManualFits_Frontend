@@ -3,6 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { Gift, Edit3 } from "lucide-react";
 import { giftCardApi } from "@/lib/paymentApi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
 
 interface GiftCard {
@@ -88,8 +93,6 @@ export default function GiftCardsSection() {
 
   // Handle delete
   const handleDelete = async (giftCardId: string) => {
-    if (!confirm("Are you sure you want to delete this gift card?")) return;
-
     try {
       setLoading(true);
       await giftCardApi.delete(giftCardId);
@@ -118,8 +121,13 @@ export default function GiftCardsSection() {
   return (
     <div className="bg-white shadow-md rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gift Cards</h2>
-        <button
+        <div className="flex items-center space-x-3">
+          <h2 className="text-2xl font-bold">Gift Cards</h2>
+          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
+            Coming Soon...
+          </span>
+        </div>
+        <Button
           onClick={() => {
             setEditingGiftCard(null);
             setForm({
@@ -131,11 +139,11 @@ export default function GiftCardsSection() {
             setShowForm(true);
           }}
           className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-900 flex items-center space-x-2"
-          disabled={loading}
+          disabled={true}
         >
           <Gift className="w-4 h-4" />
           <span>Add Gift Card</span>
-        </button>
+        </Button>
       </div>
 
       {/* Add/Edit Form */}
@@ -147,10 +155,10 @@ export default function GiftCardsSection() {
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Gift Card Code *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
@@ -161,10 +169,10 @@ export default function GiftCardsSection() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Balance (₹) *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="number"
                   value={form.balance}
                   onChange={(e) =>
@@ -177,10 +185,10 @@ export default function GiftCardsSection() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Expiry Date *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="date"
                   value={form.expiry_date}
                   onChange={(e) =>
@@ -192,7 +200,7 @@ export default function GiftCardsSection() {
                 />
               </div>
               <div className="flex items-center">
-                <label className="flex items-center">
+                <Label className="flex items-center">
                   <input
                     type="checkbox"
                     checked={form.is_active}
@@ -203,19 +211,20 @@ export default function GiftCardsSection() {
                     disabled={loading}
                   />
                   <span className="text-sm text-gray-700">Active</span>
-                </label>
+                </Label>
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
-              <button
+              <Button
                 type="button"
                 onClick={resetForm}
+                variant="outline"
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
                 disabled={loading}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-900 disabled:opacity-50"
                 disabled={loading}
@@ -225,7 +234,7 @@ export default function GiftCardsSection() {
                   : editingGiftCard
                   ? "Update Gift Card"
                   : "Add Gift Card"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -240,66 +249,74 @@ export default function GiftCardsSection() {
       ) : giftCards.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {giftCards.map((card) => (
-            <div
+            <Card
               key={card.giftcard_id}
-              className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-pink-50"
+              className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200"
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center space-x-2">
-                  <Gift className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-semibold text-gray-800">Gift Card</h3>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center space-x-2">
+                    <Gift className="w-5 h-5 text-purple-600" />
+                    <CardTitle className="text-gray-800">Gift Card</CardTitle>
+                  </div>
+                  <Badge
+                    variant={card.is_active ? "default" : "secondary"}
+                    className={
+                      card.is_active
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }
+                  >
+                    {card.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 </div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    card.is_active
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {card.is_active ? "Active" : "Inactive"}
-                </span>
-              </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2 mb-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Code</p>
+                    <p className="font-mono text-lg font-bold text-gray-800">
+                      {card.code}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Balance</p>
+                    <p className="text-xl font-bold text-green-600">
+                      ₹{card.balance}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Expires</p>
+                    <p className="text-gray-700">
+                      {new Date(card.expiry_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="space-y-2 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">Code</p>
-                  <p className="font-mono text-lg font-bold text-gray-800">
-                    {card.code}
-                  </p>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    onClick={() => handleEdit(card)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 hover:text-gray-800 p-1"
+                    title="Edit Gift Card"
+                    disabled={loading}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(card.giftcard_id)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-800 p-1"
+                    title="Delete Gift Card"
+                    disabled={loading}
+                  >
+                    <TrashIcon />
+                  </Button>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Balance</p>
-                  <p className="text-xl font-bold text-green-600">
-                    ₹{card.balance}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Expires</p>
-                  <p className="text-gray-700">
-                    {new Date(card.expiry_date).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => handleEdit(card)}
-                  className="text-gray-600 hover:text-gray-800 p-1"
-                  title="Edit Gift Card"
-                  disabled={loading}
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(card.giftcard_id)}
-                  className="text-red-600 hover:text-red-800 p-1"
-                  title="Delete Gift Card"
-                  disabled={loading}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (

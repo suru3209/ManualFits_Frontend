@@ -16,7 +16,7 @@ export default function WishlistPage() {
 
   if (wishlist.length === 0) {
     return (
-      <div className="mx-auto  p-5 mt-10 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
+      <div className="mx-auto  p-5 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
         <div className="flex lg:pt-60 lg:pb-50 lg:w-330 flex-col items-center justify-center">
         <span className="absolute top-16 bg-gray-300 w-screen">
           <DynamicBreadcrumb />
@@ -35,9 +35,9 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="mx-auto p-4 pt-20 bg-gray-300 min-h-screen">
+    <div className="mx-auto bg-gray-300 min-h-screen">
       <DynamicBreadcrumb />
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 lg:px-20 px-5">
         {wishlist.map((product) => {
           const stableId =
             (product as unknown as { _id?: string })._id ?? product.id;

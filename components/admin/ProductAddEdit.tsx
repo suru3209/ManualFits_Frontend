@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { buildApiUrl } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -22,14 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   ArrowLeft,
   Save,
   Upload,
@@ -38,14 +31,10 @@ import {
   Trash2,
   Package,
   DollarSign,
-  Tag,
-  Star,
   Eye,
   Settings,
   FileText,
   Palette,
-  Ruler,
-  Shield,
   Globe,
 } from "lucide-react";
 import { uploadMultipleImages } from "@/lib/cloudinary";
@@ -182,8 +171,6 @@ const subcategories = [
   "Viral Fashions",
 ];
 
-const commonSizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-const shoeSizes = ["6", "7", "8", "9", "10", "11", "12", "13"];
 const commonColors = [
   "Black",
   "White",
@@ -396,11 +383,15 @@ export default function ProductAddEdit({
 
     try {
       const token = localStorage.getItem("adminToken");
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+      if (!token) {
+        throw new Error("Admin token not found. Please login again.");
+      }
+
+      // Use proper API utilities
       const url = isEdit
-        ? `${baseUrl}/api/admin/products/${productId}`
-        : `${baseUrl}/api/admin/products`;
+        ? buildApiUrl(`/api/admin/products/${productId}`)
+        : buildApiUrl("/api/admin/products");
       const method = isEdit ? "PUT" : "POST";
 
       // Generate slug if not provided and fix subcategory format
@@ -417,6 +408,7 @@ export default function ProductAddEdit({
       };
 
       console.log("Sending product data:", productData);
+      console.log("API URL:", url);
 
       const response = await fetch(url, {
         method,
@@ -465,6 +457,20 @@ export default function ProductAddEdit({
       }
     } catch (error) {
       console.error("Error saving product:", error);
+
+      // Handle different types of errors
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        console.error("Network error: Unable to connect to the server");
+        alert(
+          "Network error: Unable to connect to the server. Please check your internet connection and try again."
+        );
+      } else if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        alert(`Error: ${error.message}`);
+      } else {
+        console.error("Unknown error occurred");
+        alert("An unknown error occurred. Please try again.");
+      }
     } finally {
       setSaving(false);
     }
@@ -713,7 +719,7 @@ export default function ProductAddEdit({
                     <img
                       src={image}
                       alt={`Product ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg border"
+                      className="w-full h-32 object-contain rounded-lg border bg-gray-50"
                     />
                     <Button
                       type="button"

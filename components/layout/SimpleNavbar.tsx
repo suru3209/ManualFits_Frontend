@@ -12,11 +12,51 @@ export default function SimpleNavbar() {
   const { cartItems } = useCart();
   const { wishlist } = useWishlist();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ image: string } | null>(
+    null
+  );
 
   // Check if user is logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
     setIsLoggedIn(!!token);
+
+    // Load user profile data if logged in
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        // console.log("SimpleNavbar - User data from localStorage:", userData);
+        // console.log("SimpleNavbar - User image:", userData.image);
+        setUserProfile({ image: userData.image || "" });
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+
+    // Listen for localStorage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user" && e.newValue) {
+        try {
+          const userData = JSON.parse(e.newValue);
+          console.log(
+            "SimpleNavbar - User data updated from localStorage:",
+            userData
+          );
+          setUserProfile({ image: userData.image || "" });
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error("Error parsing updated user data:", error);
+        }
+      } else if (e.key === "user" && !e.newValue) {
+        // User logged out
+        setUserProfile(null);
+        setIsLoggedIn(false);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   // Calculate cart items count
@@ -54,11 +94,11 @@ export default function SimpleNavbar() {
             {/* Cart Icon */}
             <button
               onClick={() => router.push("/cart")}
-              className="relative p-2 text-gray-600 hover:text-blue-500 transition-colors"
+              className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ShoppingBag className="h-6 w-6" />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cartItemsCount}
                 </span>
               )}
@@ -69,9 +109,21 @@ export default function SimpleNavbar() {
               (isLoggedIn ? (
                 <button
                   onClick={() => router.push("/account/dashboard")}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                 >
-                  Profile
+                  {userProfile?.image && userProfile.image.trim() !== "" ? (
+                    <img
+                      src={userProfile.image}
+                      alt="Profile"
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-xs text-gray-600 font-medium">
+                        U
+                      </span>
+                    </div>
+                  )}
                 </button>
               ) : (
                 <button

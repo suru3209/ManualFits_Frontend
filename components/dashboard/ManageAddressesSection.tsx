@@ -4,6 +4,7 @@ import React from "react";
 import { MapPin, Edit3 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
 
 interface Address {
@@ -64,13 +65,13 @@ export default function ManageAddressesSection({
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <h2 className="text-xl sm:text-2xl font-bold">Manage Addresses</h2>
-        <button
+        <Button
           onClick={onAddAddress}
           className="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-900 text-sm sm:text-base w-full sm:w-auto"
         >
           <span className="hidden sm:inline">Add New Address</span>
           <span className="sm:hidden">Add Address</span>
-        </button>
+        </Button>
       </div>
 
       {/* Add/Edit Address Form */}
@@ -187,19 +188,20 @@ export default function ManageAddressesSection({
               </div>
             </div>
             <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
-              <button
+              <Button
                 type="button"
                 onClick={onCancelAddressForm}
+                variant="outline"
                 className="px-3 sm:px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm sm:text-base w-full sm:w-auto"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 className="px-3 sm:px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-900 text-sm sm:text-base w-full sm:w-auto"
               >
                 {editingAddress ? "Update Address" : "Add Address"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -228,25 +230,31 @@ export default function ManageAddressesSection({
                 </div>
                 <div className="flex space-x-2">
                   {!address.is_default && (
-                    <button
+                    <Button
                       onClick={() => onSetDefaultAddress(address.address_id)}
+                      variant="ghost"
+                      size="sm"
                       className="text-gray-600 hover:text-gray-900 text-sm"
                     >
                       Set as Default
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
                     onClick={() => onEditAddress(address)}
+                    variant="ghost"
+                    size="sm"
                     className="text-gray-600 hover:text-gray-900 text-sm mr-2"
                   >
                     <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => onDeleteAddress(address.address_id)}
+                    variant="ghost"
+                    size="sm"
                     className="text-gray-600 hover:text-gray-900 text-sm"
                   >
                     <TrashIcon />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

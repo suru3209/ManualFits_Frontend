@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { User, Mail, Phone, Calendar, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +30,7 @@ export default function PersonalInfoSection({
   userCart,
   onEditProfile,
 }: PersonalInfoSectionProps) {
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
   return (
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
@@ -49,7 +50,10 @@ export default function PersonalInfoSection({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+              <div
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setShowProfilePopup(true)}
+              >
                 {user.image ? (
                   <img
                     src={user.image}
@@ -165,6 +169,31 @@ export default function PersonalInfoSection({
           </div>
         </div>
       </div>
+
+      {/* Profile Picture Popup Modal */}
+      {showProfilePopup && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setShowProfilePopup(false)}
+        >
+          <div
+            className="w-64 h-64 rounded-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {user.image ? (
+              <img
+                src={user.image}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <User className="w-24 h-24 text-gray-400" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

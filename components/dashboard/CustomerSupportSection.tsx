@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { buildApiUrl } from "@/lib/api";
 import { safeLocalStorage } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   MessageCircle,
   Plus,
@@ -19,8 +20,6 @@ import {
   Settings,
   RotateCcw,
   X,
-  Paperclip,
-  Image as ImageIcon,
   Star,
 } from "lucide-react";
 
@@ -95,7 +94,6 @@ export default function CustomerSupportSection({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [socket, setSocket] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -685,10 +683,10 @@ export default function CustomerSupportSection({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <Label className="block text-sm font-medium mb-1">
                   Subject
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={newChatData.subject}
                   onChange={(e) =>
@@ -703,9 +701,9 @@ export default function CustomerSupportSection({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <Label className="block text-sm font-medium mb-1">
                   Category
-                </label>
+                </Label>
                 <select
                   value={newChatData.category}
                   onChange={(e) =>
@@ -726,9 +724,9 @@ export default function CustomerSupportSection({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <Label className="block text-sm font-medium mb-1">
                   Priority
-                </label>
+                </Label>
                 <select
                   value={newChatData.priority}
                   onChange={(e) =>
@@ -748,9 +746,9 @@ export default function CustomerSupportSection({
 
               {newChatData.category === "order" && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <Label className="block text-sm font-medium mb-1">
                     Related Order (Optional)
-                  </label>
+                  </Label>
                   <select
                     value={newChatData.orderId}
                     onChange={(e) => {
@@ -976,24 +974,13 @@ export default function CustomerSupportSection({
                     {/* End Chat Button - Only show for open/in_progress chats */}
                     {(selectedChat.status === "open" ||
                       selectedChat.status === "in_progress") && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => {
-                            console.log("🧪 Test button clicked");
-                            setShowRatingModal(true);
-                          }}
-                          className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1"
-                        >
-                          Test Rating
-                        </Button>
-                        <Button
-                          onClick={endChat}
-                          disabled={endingChat}
-                          className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1"
-                        >
-                          {endingChat ? "Ending..." : "End Chat"}
-                        </Button>
-                      </div>
+                      <Button
+                        onClick={endChat}
+                        disabled={endingChat}
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1"
+                      >
+                        {endingChat ? "Ending..." : "End Chat"}
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -1148,7 +1135,7 @@ export default function CustomerSupportSection({
               {/* Message Input */}
               <div className="p-4 border-t">
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
@@ -1223,14 +1210,16 @@ export default function CustomerSupportSection({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <Label className="block text-sm font-medium mb-2">
                   How would you rate this support session?
-                </label>
+                </Label>
                 <div className="flex space-x-2">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <button
+                    <Button
                       key={star}
                       onClick={() => setRating(star)}
+                      variant="ghost"
+                      size="sm"
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         star <= rating
                           ? "bg-yellow-400 text-white"
@@ -1238,7 +1227,7 @@ export default function CustomerSupportSection({
                       }`}
                     >
                       <Star className="w-4 h-4 fill-current" />
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -1252,9 +1241,9 @@ export default function CustomerSupportSection({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <Label className="block text-sm font-medium mb-1">
                   Additional Comments (Optional)
-                </label>
+                </Label>
                 <textarea
                   value={ratingComment}
                   onChange={(e) => setRatingComment(e.target.value)}

@@ -58,12 +58,12 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/about" className="hover:text-white">
+              <Link href="/privacy" className="hover:text-white">
                 About Us
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-white">
+              <Link href="/privacy" className="hover:text-white">
                 Contact
               </Link>
             </li>
@@ -73,7 +73,7 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/terms" className="hover:text-white">
+              <Link href="/privacy" className="hover:text-white">
                 Terms & Conditions
               </Link>
             </li>
