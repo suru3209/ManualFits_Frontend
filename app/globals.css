@@ -3,6 +3,52 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "MyFont";
+  src: url("/myfonts/Aveschon.otf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Author Font - Multiple Weights */
+@font-face {
+  font-family: "Author";
+  src: url("/myfonts/Author.otf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Author";
+  src: url("/myfonts/Author-Regular.otf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Author";
+  src: url("/myfonts/Author-Medium.otf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "caprasimo";
+  src: url("/caprasimo/caprasimo-regular.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+/* Apply globally */
+.navigation_items {
+  font-family: "Author-Bold";
+}
+.page_heading1 {
+  font-family: "Aveschon";
+}
+.page_heading2 {
+  font-family: "Gambetta";
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

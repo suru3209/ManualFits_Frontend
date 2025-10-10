@@ -34,6 +34,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingPage } from "@/components/ui/loading";
 import {
   fetchProductReviews,
   createReview,
@@ -63,13 +64,37 @@ type AnyProduct = {
   reviews: number;
   brand: string;
   description: string;
+  totalStock?: number;
 };
 
 async function fetchAllProducts(): Promise<AnyProduct[]> {
   const res = await fetch(buildApiUrl("/products"), { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch products");
+  if (!res.ok) {
+    throw new Error("Failed to fetch products");
+  }
   const json = await res.json();
   return Array.isArray(json) ? json : json.data ?? [];
+}
+
+async function fetchSingleProduct(
+  productId: string
+): Promise<AnyProduct | null> {
+  try {
+    const res = await fetch(buildApiUrl(`/products/${productId}`), {
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        return null;
+      }
+      throw new Error("Failed to fetch product");
+    }
+    const json = await res.json();
+    return json.data || json;
+  } catch (error) {
+    console.error("Error fetching single product:", error);
+    return null;
+  }
 }
 
 export default function ProductPage() {
@@ -87,6 +112,7 @@ export default function ProductPage() {
   } = useWishlist();
   const { showToast } = useToast();
   const [product, setProduct] = useState<AnyProduct | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [wishlist, setWishlist] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -105,6 +131,7 @@ export default function ProductPage() {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [productReviews, setProductReviews] = useState<Review[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<AnyProduct[]>([]);
+  const [updatingStock, setUpdatingStock] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "description" | "reviews" | "specifications"
   >("description");
@@ -314,6 +341,51 @@ export default function ProductPage() {
     }
   };
 
+  // Function to get stock for selected size
+  const getStockForSize = (size: string): number => {
+    if (!product) return 0;
+
+    // First try to get from sizes array
+    const stockFromSizes = product.sizes?.find((s) => s.size === size)?.stock;
+    if (stockFromSizes !== undefined) {
+      return stockFromSizes;
+    }
+
+    // Fallback to totalStock if sizes array is not available
+    return product.totalStock || 0;
+  };
+
+  // Function to update stock in real-time
+  const updateProductStock = async (size: string, newStock: number) => {
+    if (!product || !stableId) return;
+
+    try {
+      setUpdatingStock(true);
+
+      // Update local state immediately for better UX
+      setProduct((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          sizes:
+            prev.sizes?.map((s) =>
+              s.size === size ? { ...s, stock: newStock } : s
+            ) || [],
+          // Also update totalStock as fallback
+          totalStock: newStock,
+        };
+      });
+
+      // In a real app, you would make an API call here to update the database
+      // For now, we'll just update the local state
+    } catch (error) {
+      console.error("Error updating stock:", error);
+      showToast("Failed to update stock");
+    } finally {
+      setUpdatingStock(false);
+    }
+  };
+
   // Handle image upload for reviews
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -445,19 +517,26 @@ export default function ProductPage() {
     let isMounted = true;
     (async () => {
       try {
-        const all = await fetchAllProducts();
-        const found = all.find(
-          (p) => String((p as AnyProduct)._id ?? p.id) === String(routeId)
-        );
+        setIsLoading(true);
+        // First try to fetch single product directly
+        const found = await fetchSingleProduct(String(routeId));
+
         if (!isMounted) return;
+
         if (found) {
-          setProduct(found);
+          // Ensure product has totalStock field
+          const productWithStock = {
+            ...found,
+            totalStock: found.totalStock || 10, // Default stock if not provided
+          };
+
+          setProduct(productWithStock);
           setSelectedSize(found.sizes?.[0]?.size || found.size?.[0] || "");
           setSelectedColor(found.colors?.[0] || found.color?.[0] || "");
-          // setMainImage(found.images?.[0]);
           setCurrentImageIndex(0);
 
           // Get related products from same category
+          const all = await fetchAllProducts();
           const related = all
             .filter(
               (p) =>
@@ -467,30 +546,33 @@ export default function ProductPage() {
             )
             .slice(0, 4);
           setRelatedProducts(related);
-
-          // initialize wishlist state based on context
-          const sid = String(
-            (found as AnyProduct)._id ?? (found as AnyProduct).id
-          );
-          const inWishlist = wishlistItems.some(
-            (p) => String((p as AnyProduct)._id ?? (p as AnyProduct).id) === sid
-          );
-          setWishlist(inWishlist);
-
-          // Reviews will be loaded when product is available via separate useEffect
-          // checkUserEligibility will be called when currentUser is available
         } else {
           setProduct(null);
         }
-      } catch {
+      } catch (error) {
+        console.error("Error in product fetch:", error);
         setProduct(null);
       } finally {
+        setIsLoading(false);
       }
     })();
     return () => {
       isMounted = false;
     };
-  }, [routeId, wishlistItems]);
+  }, [routeId]);
+
+  // Separate useEffect for wishlist state
+  useEffect(() => {
+    if (product && wishlistItems) {
+      const sid = String(
+        (product as AnyProduct)._id ?? (product as AnyProduct).id
+      );
+      const inWishlist = wishlistItems.some(
+        (p) => String((p as AnyProduct)._id ?? (p as AnyProduct).id) === sid
+      );
+      setWishlist(inWishlist);
+    }
+  }, [product, wishlistItems]);
 
   const stableId = useMemo(
     () => (product ? product._id ?? product.id : undefined),
@@ -515,6 +597,14 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     if (stableId) {
+      // Check stock before adding to cart
+      const totalStock = getStockForSize(selectedSize);
+
+      if (qty > totalStock) {
+        showToast(`Only ${totalStock} items available in stock`);
+        return;
+      }
+
       addToCart({ ...(product as AnyProduct), id: stableId, qty });
       setAddedToCart(true);
       showToast("Product added to cart!");
@@ -523,6 +613,14 @@ export default function ProductPage() {
 
   const handleBuyNow = () => {
     if (stableId) {
+      // Check stock before buying
+      const totalStock = getStockForSize(selectedSize);
+
+      if (qty > totalStock) {
+        showToast(`Only ${totalStock} items available in stock`);
+        return;
+      }
+
       addToCart({ ...(product as AnyProduct), id: stableId, qty });
       router.push("/checkout");
     }
@@ -799,6 +897,10 @@ export default function ProductPage() {
     ));
   };
 
+  if (isLoading) {
+    return <LoadingPage message="Loading product details..." />;
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -820,33 +922,31 @@ export default function ProductPage() {
     );
   }
 
-  if (!product) return null;
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Breadcrumb */}
-      <div className="bg-white border-b">
+      <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <nav className="flex items-center space-x-2 text-sm">
             <button
               onClick={() => router.push("/")}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-muted-foreground hover:text-foreground"
             >
               Home
             </button>
-            <span className="text-gray-400">/</span>
+            <span className="text-muted-foreground">/</span>
             <button
               onClick={() => router.push("/products")}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-muted-foreground hover:text-foreground"
             >
               Products
             </button>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium">
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-medium">
               {product.category}
             </span>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium truncate max-w-xs">
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-medium truncate max-w-xs">
               {product.name}
             </span>
           </nav>
@@ -859,12 +959,12 @@ export default function ProductPage() {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative group">
-              <div className="relative overflow-hidden bg-white shadow-lg">
+              <div className="relative overflow-hidden bg-card shadow-lg border rounded-lg">
                 <motion.img
                   key={product.images[currentImageIndex]}
                   src={product.images[currentImageIndex]}
                   alt={product.name}
-                  className="w-full h-[600px] object-cover"
+                  className="w-full h-[600px] object-cover rounded-lg"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
@@ -881,8 +981,8 @@ export default function ProductPage() {
                       alt="thumbnail"
                       className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 ${
                         currentImageIndex === index
-                          ? "border-blue-500"
-                          : "border-gray-200"
+                          ? "border-primary"
+                          : "border-border"
                       }`}
                       onClick={() => setCurrentImageIndex(index)}
                     />
@@ -897,16 +997,18 @@ export default function ProductPage() {
             {/* Brand and Title */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium text-gray-600">
+                <span className="text-sm font-medium text-muted-foreground">
                   {product.brand}
                 </span>
                 <div className="flex items-center gap-1">
-                  <Award className="w-3 h-3 text-yellow-500" />
-                  <span className="text-xs text-gray-500">Premium Brand</span>
+                  <Award className="w-3 h-3 text-primary" />
+                  <span className="text-xs text-muted-foreground">
+                    Premium Brand
+                  </span>
                 </div>
               </div>
               <motion.h1
-                className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2"
+                className="text-2xl lg:text-3xl font-bold text-foreground mb-2"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
@@ -918,18 +1020,18 @@ export default function ProductPage() {
               <div className="flex gap-2 mb-4">
                 <motion.button
                   onClick={shareProduct}
-                  className="bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors"
+                  className="bg-secondary hover:bg-secondary/80 rounded-full p-2 transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Share2 className="w-5 h-5 text-gray-700" />
+                  <Share2 className="w-5 h-5 text-secondary-foreground" />
                 </motion.button>
                 <motion.button
                   onClick={toggleWishlist}
                   className={`rounded-full p-2 transition-all ${
                     wishlist
-                      ? "bg-red-500 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
                   }`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -947,24 +1049,24 @@ export default function ProductPage() {
                 <div className="flex">
                   {renderStars(parseFloat(calculateActualRating()) || 0)}
                 </div>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-foreground">
                   {calculateActualRating()}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-sm text-gray-500">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
                 <span>{productReviews.length} reviews</span>
               </div>
             </div>
 
             {/* Price Section */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-muted rounded-lg p-4">
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-foreground">
                   ₹{product.price}
                 </span>
                 {product.originalPrice > product.price && (
-                  <span className="text-lg text-gray-500 line-through">
+                  <span className="text-lg text-muted-foreground line-through">
                     ₹{product.originalPrice}
                   </span>
                 )}
@@ -979,12 +1081,12 @@ export default function ProductPage() {
                   <span className="text-sm font-medium">In Stock</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="flex items-center gap-2 text-destructive">
+                  <div className="w-2 h-2 bg-destructive rounded-full"></div>
                   <span className="text-sm font-medium">Out of Stock</span>
                 </div>
               )}
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 • Free shipping on orders over ₹999
               </span>
             </div>
@@ -992,7 +1094,7 @@ export default function ProductPage() {
             {/* Size Selection */}
             {(product.size || product.sizes) && (
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">
+                <h3 className="text-base font-semibold text-foreground mb-2">
                   Size
                 </h3>
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -1003,11 +1105,16 @@ export default function ProductPage() {
                   ).map((s) => (
                     <motion.button
                       key={s}
-                      onClick={() => setSelectedSize(s)}
+                      onClick={() => {
+                        setSelectedSize(s);
+                        // Reset quantity to 1 when size changes
+                        setQty(1);
+                        // Note: Product data is already loaded, no need to refetch
+                      }}
                       className={`px-3 py-2 border-2 rounded-lg font-medium transition-all text-sm ${
                         selectedSize === s
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-gray-200 hover:border-gray-400 text-gray-700"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-muted-foreground text-foreground"
                       }`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -1022,7 +1129,7 @@ export default function ProductPage() {
             {/* Color Selection */}
             {(product.color || product.colors) && (
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">
+                <h3 className="text-base font-semibold text-foreground mb-2">
                   Color
                 </h3>
                 <div className="flex gap-2">
@@ -1032,8 +1139,8 @@ export default function ProductPage() {
                       onClick={() => setSelectedColor(c)}
                       className={`w-10 h-10 rounded-full border-2 cursor-pointer transition-all ${
                         selectedColor === c
-                          ? "ring-4 ring-blue-200 border-blue-500"
-                          : "border-gray-200 hover:border-gray-400"
+                          ? "ring-4 ring-primary/20 border-primary"
+                          : "border-border hover:border-muted-foreground"
                       }`}
                       style={{ backgroundColor: c.toLowerCase() }}
                       whileHover={{ scale: 1.1 }}
@@ -1046,30 +1153,85 @@ export default function ProductPage() {
 
             {/* Quantity */}
             <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-2">
+              <h3 className="text-base font-semibold text-foreground mb-2">
                 Quantity
               </h3>
               <div className="flex items-center gap-3">
-                <div className="flex items-center border border-gray-300 rounded-lg">
+                <div className="flex items-center border border-border rounded-lg">
                   <motion.button
-                    onClick={() => qty > 1 && setQty(qty - 1)}
-                    className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                    onClick={() => {
+                      if (qty > 1) {
+                        setQty(qty - 1);
+                        // Update stock in real-time (increase by 1)
+                        const totalStock = getStockForSize(selectedSize);
+                        updateProductStock(selectedSize, totalStock + 1);
+                      }
+                    }}
+                    disabled={qty <= 1 || updatingStock}
+                    className={`px-3 py-2 transition-colors ${
+                      qty <= 1 || updatingStock
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "hover:bg-muted"
+                    }`}
                     whileTap={{ scale: 0.95 }}
                   >
                     <Minus className="w-4 h-4" />
                   </motion.button>
                   <span className="px-4 py-2 font-medium">{qty}</span>
                   <motion.button
-                    onClick={() => setQty(qty + 1)}
-                    className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                    onClick={() => {
+                      // Get stock for selected size using helper function
+                      const totalStock = getStockForSize(selectedSize);
+
+                      if (qty < totalStock) {
+                        setQty(qty + 1);
+                        // Update stock in real-time (decrease by 1)
+                        updateProductStock(selectedSize, totalStock - 1);
+                      } else {
+                        showToast(
+                          `Only ${totalStock} items available in stock`
+                        );
+                      }
+                    }}
+                    disabled={(() => {
+                      const totalStock = getStockForSize(selectedSize);
+                      return qty >= totalStock || updatingStock;
+                    })()}
+                    className={`px-3 py-2 transition-colors ${(() => {
+                      const totalStock = getStockForSize(selectedSize);
+                      return qty >= totalStock || updatingStock
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "hover:bg-muted";
+                    })()}`}
                     whileTap={{ scale: 0.95 }}
                   >
                     <Plus className="w-4 h-4" />
                   </motion.button>
                 </div>
-                <span className="text-xs text-gray-500">
-                  Only {Math.floor(Math.random() * 20) + 5} left in stock
-                </span>
+                {(() => {
+                  // Get stock for selected size using the helper function
+                  const totalStock = getStockForSize(selectedSize);
+
+                  if (totalStock === 0) {
+                    return (
+                      <span className="text-xs text-destructive font-medium">
+                        Out of stock
+                      </span>
+                    );
+                  } else if (totalStock <= 5) {
+                    return (
+                      <span className="text-xs text-orange-500 font-medium">
+                        Only {totalStock} left in stock
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className="text-xs text-green-600 font-medium">
+                        {totalStock} items in stock
+                      </span>
+                    );
+                  }
+                })()}
               </div>
             </div>
 
@@ -1081,10 +1243,10 @@ export default function ProductPage() {
                   disabled={!product.inStock}
                   className={`w-full py-3 px-4 rounded-lg font-semibold text-base transition-all flex items-center justify-center gap-2 ${
                     addedToCart
-                      ? "bg-green-500 text-white"
+                      ? "bg-green-600 text-white"
                       : product.inStock
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
                   }`}
                   whileHover={product.inStock ? { scale: 1.02 } : {}}
                   whileTap={product.inStock ? { scale: 0.98 } : {}}
@@ -1097,8 +1259,8 @@ export default function ProductPage() {
                   disabled={!product.inStock}
                   className={`w-full py-3 px-4 rounded-lg font-semibold text-base transition-all ${
                     product.inStock
-                      ? "bg-gray-900 hover:bg-black text-white"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
                   }`}
                   whileHover={product.inStock ? { scale: 1.02 } : {}}
                   whileTap={product.inStock ? { scale: 0.98 } : {}}
@@ -1109,38 +1271,38 @@ export default function ProductPage() {
             </div>
 
             {/* Trust Badges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-border">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Truck className="w-4 h-4 text-green-600" />
+                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <Truck className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-900">
+                  <p className="text-xs font-medium text-foreground">
                     Free Shipping
                   </p>
-                  <p className="text-xs text-gray-500">Over ₹999</p>
+                  <p className="text-xs text-muted-foreground">Over ₹999</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <RotateCcw className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <RotateCcw className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-900">
+                  <p className="text-xs font-medium text-foreground">
                     Easy Returns
                   </p>
-                  <p className="text-xs text-gray-500">30-day policy</p>
+                  <p className="text-xs text-muted-foreground">30-day policy</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-purple-600" />
+                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-900">
+                  <p className="text-xs font-medium text-foreground">
                     Secure Payment
                   </p>
-                  <p className="text-xs text-gray-500">100% secure</p>
+                  <p className="text-xs text-muted-foreground">100% secure</p>
                 </div>
               </div>
             </div>
@@ -1149,7 +1311,7 @@ export default function ProductPage() {
 
         {/* Product Details Tabs */}
         <div className="mt-8 lg:mt-16">
-          <div className="border-b border-gray-200">
+          <div className="border-b border-border">
             <nav className="flex flex-wrap space-x-4 sm:space-x-8">
               {[
                 { id: "description", label: "Description", icon: Tag },
@@ -1169,8 +1331,8 @@ export default function ProductPage() {
                   }
                   className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 transition-colors ${
                     activeTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" />

@@ -519,8 +519,10 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto p-5 lg:p-20 pt-15 bg-gray-300">
-      <DynamicBreadcrumb />
-      <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+      <div className="lg:-ml-16 -ml-5 mb-4 -mt-5">
+        <DynamicBreadcrumb />
+      </div>
+      {/* <h1 className="text-3xl font-bold mb-6">Checkout</h1> */}
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Shipping Info */}
         <div className="flex-1 bg-gray-50 shadow-md rounded-lg p-6">

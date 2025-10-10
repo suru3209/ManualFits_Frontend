@@ -44,12 +44,12 @@ type MenuData = Record<string, MenuContent>;
 
 // Data
 const NAVIGATION_ITEMS = [
-  { label: "New Arrivals", href: "/products?category=New Arrivals" },
-  { label: "Men", href: "/products?category=Men" },
-  { label: "Women", href: "/products?category=Women" },
+  { label: "NEW ARRIVALS", href: "/products?category=New Arrivals" },
+  { label: "MEN", href: "/products?category=Men" },
+  { label: "WOMEN", href: "/products?category=Women" },
   // { label: "Kids", href: "/products?category=Kids" },
-  { label: "Accessories", href: "/products?category=Accessories" },
-  { label: "Footwear", href: "/products?category=Footwear" },
+  { label: "ACCESSORIES", href: "/products?category=Accessories" },
+  { label: "FOOTWEAR", href: "/products?category=Footwear" },
   // { label: "Winter Collection", href: "/products?category=Winter Collection" },
   // { label: "Summer Collection", href: "/products?category=Summer Collection" },
   // { label: "Sale", href: "/products?category=Sale" },
@@ -57,7 +57,7 @@ const NAVIGATION_ITEMS = [
 ] as const;
 
 const MENU_CONTENT: MenuData = {
-  "New Arrivals": {
+  "NEW ARRIVALS": {
     firstUl: {
       title: "Latest Drops",
       items: [
@@ -132,7 +132,7 @@ const MENU_CONTENT: MenuData = {
       ],
     },
   },
-  Men: {
+  MEN: {
     firstUl: {
       title: "Men's Clothing",
       items: [
@@ -206,7 +206,7 @@ const MENU_CONTENT: MenuData = {
       ],
     },
   },
-  Women: {
+  WOMEN: {
     firstUl: {
       title: "Women's Fashion",
       items: [
@@ -280,42 +280,7 @@ const MENU_CONTENT: MenuData = {
       ],
     },
   },
-  // "Kids": {
-  //   firstUl: {
-  //     title: "Kids Fashion",
-  //     items: [
-  //       { label: "Boys Clothing", href: "/kids/boys-clothing" },
-  //       { label: "Girls Clothing", href: "/kids/girls-clothing" },
-  //       { label: "Baby Wear", href: "/kids/baby-wear" },
-  //       { label: "School Uniforms", href: "/kids/school-uniforms" },
-  //       { label: "Party Wear", href: "/kids/party-wear" },
-  //       { label: "Sports Wear", href: "/kids/sports-wear" },
-  //       { label: "Accessories", href: "/kids/accessories" },
-  //     ],
-  //   },
-  //   secondUl: {
-  //     title: "Age Groups",
-  //     items: [
-  //       { label: "Newborn (0-12M)", href: "/kids/newborn" },
-  //       { label: "Toddlers (1-3Y)", href: "/kids/toddlers" },
-  //       { label: "Kids (4-8Y)", href: "/kids/kids" },
-  //       { label: "Pre-teens (9-12Y)", href: "/kids/pre-teens" },
-  //       { label: "Teens (13-16Y)", href: "/kids/teens" },
-  //     ],
-  //   },
-  //   thirdUl: {
-  //     title: "More from Kids",
-  //     items: [
-  //       { label: "Kids Size Guide", href: "/size-guide/kids" },
-  //       { label: "Safety & Quality", href: "/safety-quality" },
-  //       { label: "Gift Ideas", href: "/gift-ideas/kids" },
-  //       { label: "Character Collection", href: "/kids/character-collection" },
-  //       { label: "Parent Reviews", href: "/reviews/kids" },
-  //     ],
-  //   },
-  // },
-  // Similarly update other categories...
-  Accessories: {
+  ACCESSORIES: {
     firstUl: {
       title: "Accessories",
       items: [
@@ -385,7 +350,7 @@ const MENU_CONTENT: MenuData = {
       ],
     },
   },
-  Footwear: {
+  FOOTWEAR: {
     firstUl: {
       title: "Footwear",
       items: [
@@ -455,40 +420,40 @@ const MENU_CONTENT: MenuData = {
       ],
     },
   },
-  "Winter Collection": {
-    firstUl: {
-      title: "Winter Wear",
-      items: [
-        { label: "Jackets & Coats", href: "/winter/jackets-coats" },
-        { label: "Sweaters & Hoodies", href: "/winter/sweaters-hoodies" },
-        { label: "Thermal Wear", href: "/winter/thermal-wear" },
-        { label: "Winter Accessories", href: "/winter/accessories" },
-        { label: "Boots & Footwear", href: "/winter/footwear" },
-        { label: "Winter Dresses", href: "/winter/dresses" },
-        { label: "Kids Winter Wear", href: "/winter/kids" },
-      ],
-    },
-    secondUl: {
-      title: "Shop By Material",
-      items: [
-        { label: "Woolen Collection", href: "/winter/woolen" },
-        { label: "Fleece & Thermal", href: "/winter/fleece-thermal" },
-        { label: "Leather Jackets", href: "/winter/leather" },
-        { label: "Puffer Coats", href: "/winter/puffer-coats" },
-        { label: "Cashmere & Premium", href: "/winter/cashmere-premium" },
-      ],
-    },
-    thirdUl: {
-      title: "Winter Essentials",
-      items: [
-        { label: "Winter Style Guide", href: "/style-guide/winter" },
-        { label: "Layering Tips", href: "/tips/layering" },
-        { label: "Gift Ideas", href: "/gift-ideas/winter" },
-        { label: "Winter Sale", href: "/sale/winter" },
-        { label: "Seasonal Offers", href: "/offers/seasonal" },
-      ],
-    },
-  },
+  // "Winter Collection": {
+  //   firstUl: {
+  //     title: "Winter Wear",
+  //     items: [
+  //       { label: "Jackets & Coats", href: "/winter/jackets-coats" },
+  //       { label: "Sweaters & Hoodies", href: "/winter/sweaters-hoodies" },
+  //       { label: "Thermal Wear", href: "/winter/thermal-wear" },
+  //       { label: "Winter Accessories", href: "/winter/accessories" },
+  //       { label: "Boots & Footwear", href: "/winter/footwear" },
+  //       { label: "Winter Dresses", href: "/winter/dresses" },
+  //       { label: "Kids Winter Wear", href: "/winter/kids" },
+  //     ],
+  //   },
+  //   secondUl: {
+  //     title: "Shop By Material",
+  //     items: [
+  //       { label: "Woolen Collection", href: "/winter/woolen" },
+  //       { label: "Fleece & Thermal", href: "/winter/fleece-thermal" },
+  //       { label: "Leather Jackets", href: "/winter/leather" },
+  //       { label: "Puffer Coats", href: "/winter/puffer-coats" },
+  //       { label: "Cashmere & Premium", href: "/winter/cashmere-premium" },
+  //     ],
+  //   },
+  //   thirdUl: {
+  //     title: "Winter Essentials",
+  //     items: [
+  //       { label: "Winter Style Guide", href: "/style-guide/winter" },
+  //       { label: "Layering Tips", href: "/tips/layering" },
+  //       { label: "Gift Ideas", href: "/gift-ideas/winter" },
+  //       { label: "Winter Sale", href: "/sale/winter" },
+  //       { label: "Seasonal Offers", href: "/offers/seasonal" },
+  //     ],
+  //   },
+  // },
 };
 
 // Animation variants
@@ -977,7 +942,7 @@ const AppleNavbar = () => {
           {NAVIGATION_ITEMS.map((item, index) => (
             <li
               key={index}
-              className="hidden cursor-pointer lg:block"
+              className="hidden cursor-pointer lg:block navigation_items"
               onMouseEnter={() => setHoveredItem(item.label)}
             >
               <Link href={item.href}>{item.label}</Link>
@@ -1095,7 +1060,7 @@ const AppleNavbar = () => {
         animate={{ height: showMenu ? "auto" : "0" }}
         transition={{ ease: [0.645, 0.045, 0.355, 1], duration: 0.5 }}
         onMouseLeave={() => setHoveredItem(null)}
-        className="relative z-20 flex w-full justify-center overflow-hidden bg-white"
+        className="relative z-20  lg:top-[16px] flex w-350 justify-center overflow-hidden  rounded-2xl bg-white"
       >
         <AnimatePresence>
           {currentContent && (
@@ -1144,12 +1109,12 @@ const AppleNavbar = () => {
       </motion.div>
 
       {/* Background Blur */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: hoveredItem ? 1 : 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
         className="pointer-events-none absolute left-0 top-0 z-10 h-screen w-screen bg-white/20 blur-lg backdrop-blur-xl"
-      />
+      /> */}
     </nav>
   );
 };

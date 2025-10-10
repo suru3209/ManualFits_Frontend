@@ -3,7 +3,6 @@
 import { motion, useInView } from "framer-motion";
 import React, { useEffect, useRef, useState } from "react";
 import DynamicBreadcrumb from "@/lib/breadcrumb";
-
 import { cn } from "@/lib/utils";
 
 type TermItem = {
@@ -55,134 +54,97 @@ const defaultTerms: TermItem[] = [
     content: (
       <>
         <p className="lg:text-lg">
-          By accessing and using our website, you agree to be bound by these
-          terms and conditions. If you do not agree with these terms, please do
-          not use our website.
+          By accessing and using ManualFits, you agree to comply with and be bound by these Terms and Conditions. If you do not agree, please do not use our website or services.
         </p>
         <p className="lg:text-lg">
-          These terms constitute a binding agreement between you and Skiper ui.
-          Your continued use of our services indicates your acceptance of any
-          updates or modifications to these terms.
+          These terms form a legal agreement between you and ManualFits. We may update these terms from time to time, and your continued use of our platform means you accept the updated version.
         </p>
       </>
     ),
   },
   {
     id: "license-agreement",
-    title: "License Agreement",
+    title: "Use of Our Services",
     content: (
       <>
         <p className="lg:text-lg">
-          Skiper ui is licensed, not sold. Upon purchase, you are granted a
-          non-exclusive, non-transferable, and revocable license to use the
-          Skiper ui plugin for personal or professional music production
-          purposes. This license allows you to install the plugin on up to two
-          devices that you own, unless additional installations are explicitly
-          permitted.
+          ManualFits grants you a limited, non-exclusive, and revocable right to browse and shop through our platform for personal and non-commercial purposes only.
         </p>
         <ul className="list-disc space-y-2 pl-4 lg:text-lg">
-          <li>You may not share, resell, rent, or sublicense the plugin.</li>
-          <li>
-            Reverse engineering, decompiling, disassembling, or attempting to
-            discover the source code of Skiper ui is strictly prohibited.
-          </li>
-          <li>
-            You may not modify the plugin or use it to create derivative works.
-          </li>
-          <li>
-            Skiper ui must not be used for any illegal, defamatory, or
-            unauthorized purposes.
-          </li>
+          <li>You may not copy, distribute, or modify any part of our website or content without permission.</li>
+          <li>Any attempt to disrupt or interfere with the website’s security, operations, or transactions is strictly prohibited.</li>
+          <li>You agree to use accurate personal information while creating or managing your account.</li>
         </ul>
       </>
     ),
   },
   {
     id: "ownership",
-    title: "Ownership",
+    title: "Intellectual Property",
     content: (
       <>
         <p className="lg:text-lg">
-          Skiper ui retains all rights, title, and interest in and to the Skiper
-          ui plugin, including all intellectual property rights. This license
-          does not grant you any ownership rights to the plugin.
+          All website content including images, text, designs, logos, and product descriptions are owned or licensed by ManualFits. These materials are protected under applicable copyright and trademark laws.
         </p>
         <p className="lg:text-lg">
-          All trademarks, service marks, and trade names used in connection with
-          the plugin are the property of Skiper ui or their respective owners.
+          You may not reproduce or use our intellectual property without written permission from ManualFits.
         </p>
       </>
     ),
   },
   {
-    id: "updates-and-support",
-    title: "Updates and Support",
+    id: "orders-and-payments",
+    title: "Orders and Payments",
     content: (
       <>
         <p className="lg:text-lg">
-          We may provide updates, bug fixes, and new features for Skiper ui at
-          our discretion. These updates may be provided automatically or may
-          require manual installation.
-        </p>
-        <p className="lg:text-lg">
-          Technical support is provided on a best-effort basis through our
-          official support channels. We do not guarantee response times or
-          resolution of issues.
-        </p>
-      </>
-    ),
-  },
-  {
-    id: "refund-policy",
-    title: "Refund Policy",
-    content: (
-      <>
-        <p className="lg:text-lg">
-          All sales are final. We do not offer refunds for digital products
-          unless required by applicable law. If you experience technical issues,
-          please contact our support team first.
-        </p>
-        <p className="lg:text-lg">
-          In exceptional circumstances, refunds may be considered on a
-          case-by-case basis within 14 days of purchase, provided that the
-          product has not been used extensively.
-        </p>
-      </>
-    ),
-  },
-  {
-    id: "system-requirements",
-    title: "System Requirements",
-    content: (
-      <>
-        <p className="lg:text-lg">
-          Skiper ui requires a compatible DAW (Digital Audio Workstation) and
-          operating system. Please check our website for current system
-          requirements before purchasing.
+          All product prices are displayed in INR (₹) and include applicable taxes. Orders will be processed only after successful payment confirmation.
         </p>
         <ul className="list-disc space-y-2 pl-4 lg:text-lg">
-          <li>Windows 10 or later (64-bit)</li>
-          <li>macOS 10.15 or later (Intel/Apple Silicon)</li>
-          <li>VST3, AU, or AAX compatible DAW</li>
-          <li>Minimum 4GB RAM (8GB recommended)</li>
+          <li>ManualFits reserves the right to cancel any order if fraud or unauthorized activity is suspected.</li>
+          <li>Payment failures or gateway errors are not the responsibility of ManualFits.</li>
         </ul>
       </>
     ),
   },
   {
-    id: "disclaimer-of-warranties",
-    title: "Disclaimer of Warranties",
+    id: "refund-policy",
+    title: "Return & Refund Policy",
     content: (
       <>
         <p className="lg:text-lg">
-          Skiper ui is provided &quot;as is&quot; without any warranties,
-          express or implied. We do not warrant that the plugin will be
-          error-free or that it will meet your specific requirements.
+          We aim to provide the best shopping experience. If you are not satisfied with a product, you may request a return or replacement within 7 days of delivery, subject to our return conditions.
         </p>
         <p className="lg:text-lg">
-          You use the plugin at your own risk. We disclaim all warranties of
-          merchantability, fitness for a particular purpose, and
-          non-infringement.
+          Refunds will be processed to the original payment method within 5–10 business days after product inspection. Please ensure items are unused and in original packaging.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "shipping",
+    title: "Shipping and Delivery",
+    content: (
+      <>
+        <p className="lg:text-lg">
+          We partner with reliable delivery providers to ensure safe and timely shipment. Standard delivery time is 5–7 business days, depending on your location.
+        </p>
+        <p className="lg:text-lg">
+          Tracking information will be provided once your order has been shipped. Delays due to unforeseen logistics or weather issues are not the responsibility of ManualFits.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "privacy",
+    title: "Privacy and Data Protection",
+    content: (
+      <>
+        <p className="lg:text-lg">
+          Your privacy is important to us. We collect and store only necessary personal data to process your orders and improve our services. We never sell or share your data with unauthorized parties.
+        </p>
+        <p className="lg:text-lg">
+          By using ManualFits, you consent to our data usage as outlined in our Privacy Policy.
         </p>
       </>
     ),
@@ -193,13 +155,10 @@ const defaultTerms: TermItem[] = [
     content: (
       <>
         <p className="lg:text-lg">
-          In no event shall Skiper ui be liable for any indirect, incidental,
-          special, consequential, or punitive damages arising out of or relating
-          to your use of Skiper ui.
+          ManualFits is not responsible for indirect, incidental, or consequential damages resulting from the use or inability to use our website or products.
         </p>
         <p className="lg:text-lg">
-          Our total liability to you for any damages shall not exceed the amount
-          you paid for the plugin license.
+          Our total liability shall not exceed the total amount paid by you for the specific product or service in question.
         </p>
       </>
     ),
@@ -210,13 +169,12 @@ const defaultTerms: TermItem[] = [
     content: (
       <>
         <p className="lg:text-lg">
-          If you have any questions about these terms and conditions, please
-          contact us at:
+          If you have any questions or concerns about these Terms & Conditions, feel free to contact us:
         </p>
         <div className="space-y-2 lg:text-lg">
-          <p>Email: support@skiperui.com</p>
-          <p>Website: www.skiperui.com</p>
-          <p>Address: 123 Music Lane, Audio City, AC 12345</p>
+          <p>Email: support@manualfits.com</p>
+          <p>Website: www.manualfits.com</p>
+          <p>Address: ManualFits Headquarters, New Delhi, India</p>
         </div>
       </>
     ),
@@ -232,13 +190,13 @@ const Skiper60 = ({
 
   return (
     <div className={cn("min-h-screen p-4 lg:p-12", className)}>
-      <div className="-ml-6">
+      <div className="-ml-6 lg:-mt-4">
         <DynamicBreadcrumb />
       </div>
-      <h1 className="font-cal-sans pt-[40px] text-3xl md:text-5xl lg:pt-0">
+      <h1 className="font-cal-sans lg:pt-[10px] text-3xl md:text-5xl">
         {title}
       </h1>
-      <div className="relative mb-[50vh] flex gap-12 py-[40px] md:py-[80px]">
+      <div className="relative  flex gap-1 py-[40px] md:py-[80px]">
         <ul className="border-foreground/10 sticky top-24 hidden h-fit w-full max-w-[300px] space-y-4 border-l md:block">
           {terms.map((term, index) => (
             <li className="relative cursor-pointer pl-3" key={term.id}>
@@ -254,7 +212,6 @@ const Skiper60 = ({
                     }}
                   />
                 )}
-
                 <p
                   className={cn(
                     "opacity-50 transition-opacity duration-200",

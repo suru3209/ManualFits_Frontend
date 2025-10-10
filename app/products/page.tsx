@@ -250,7 +250,7 @@ function ProductsPageContent() {
         onMouseLeave={handleMouseLeave}
         onClick={() => handleProductClick(stableId)}
       >
-        <div className="relative h-60 lg:h-80 overflow-hidden">
+        <div className="relative h-60 lg:h-75 overflow-hidden">
           {/* Bottom image (next image) */}
           <img
             src={product.images[1] ?? product.images[0]}
@@ -297,15 +297,15 @@ function ProductsPageContent() {
           )}
         </div>
 
-        <div className="p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+        <div className="p-2">
+          <p className="text-xs text-gray-500 uppercase tracking-wide">
             {product.brand}
           </p>
-          <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 text-sm leading-tight">
+          <h3 className="font-medium text-gray-800 mb-1 line-clamp-2 text-sm leading-tight">
             {product.name}
           </h3>
           {/* Price and discount row */}
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-gray-900">
               Rs. {product.price}
             </span>
@@ -314,7 +314,7 @@ function ProductsPageContent() {
             </span>
           </div>
           {/* Original price under price with smaller font */}
-          <div className="mb-2">
+          <div className="">
             <span className="text-[11px] text-gray-500 line-through">
               Rs. {product.originalPrice}
             </span>
@@ -342,11 +342,14 @@ function ProductsPageContent() {
         </button>
       </div>
 
-      <div className="w-full mx-0 px-0 pt-22 pb-8">
+      <div className="w-full mx-0 px-0 pt-16 pb-8">
         <div className="flex">
           {/* Sidebar Filters - Desktop */}
           <div className="hidden lg:block w-80 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm p-6 mx-6 sticky top-20">
+            <div className="bg-white shadow-sm p-6 mx-2 sticky top-19">
+              <div className="lg:-mt-5 mb-8">
+                <DynamicBreadcrumb />
+              </div>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Filter size={18} /> Filters
@@ -458,13 +461,15 @@ function ProductsPageContent() {
 
           {/* Main Content */}
           <div className="flex-1">
-            <DynamicBreadcrumb />
-
             {/* Page Title */}
-            <div className="mb-3 pl-2">
+            {/* <div className="mb-3 pl-2">
               <h1 className="text-2xl font-bold text-gray-900">
                 {getPageTitle()}
               </h1>
+            </div> */}
+            <div className="-mt-5 lg:hidden">
+              <DynamicBreadcrumb />
+              
             </div>
             {/* <p className="text-gray-600 mt-1">
                 {filteredProducts.length} product

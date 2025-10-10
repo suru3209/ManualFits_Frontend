@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import { safeLocalStorage } from "@/lib/storage";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import jwt from "jsonwebtoken";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
+import { OTPInput } from "@/components/ui/otp-input";
+import { Button } from "@/components/ui/button";
 
 export default function AuthPage() {
   // const router = useRouter();
@@ -14,6 +16,7 @@ export default function AuthPage() {
     password: "",
     username: "",
     confirmPassword: "",
+    otp: "",
   });
   const [randomTagline, setRandomTagline] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +25,12 @@ export default function AuthPage() {
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [rememberMe, setRememberMe] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  // OTP related states
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
 
   const loginTaglines = [
     "Welcome back! Missed you like cookies miss milk",
@@ -67,6 +76,11 @@ export default function AuthPage() {
     setSubmitError("");
     setShowPassword(false);
     setShowConfirmPassword(false);
+    // Reset OTP states when switching
+    setOtpSent(false);
+    setOtpError("");
+    setOtpVerified(false);
+    setFormData((prev) => ({ ...prev, otp: "" }));
     // Reset remember me when switching to signup
     if (!isLogin) {
       setRememberMe(false);
@@ -141,10 +155,108 @@ export default function AuthPage() {
         formData.confirmPassword,
         formData.password
       );
+      // Only validate OTP if it's been sent
+      if (otpSent && !otpVerified) {
+        if (!formData.otp) {
+          newErrors.otp = "OTP is required";
+        } else if (formData.otp.length !== 6) {
+          newErrors.otp = "OTP must be 6 digits";
+        }
+      }
     }
 
     setErrors(newErrors);
     return !Object.values(newErrors).some((error) => error !== "");
+  };
+
+  // OTP Functions
+  const handleGetOTP = async () => {
+    if (!formData.email) {
+      setOtpError("Please enter your email first");
+      return;
+    }
+
+    const emailError = validateEmail(formData.email);
+    if (emailError) {
+      setOtpError(emailError);
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(
+        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/signup`),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: formData.username,
+            email: formData.email,
+            password: formData.password,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setOtpSent(true);
+        setOtpError("");
+        console.log("OTP sent successfully");
+      } else {
+        setOtpError(data.message || "Failed to send OTP");
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      setOtpError("Error connecting to server. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (!formData.otp || formData.otp.length !== 6) {
+      setOtpError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError("");
+
+    try {
+      const res = await fetch(
+        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/verify-email`),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            otp: formData.otp,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setOtpVerified(true);
+        setOtpError("");
+        console.log("OTP verified successfully");
+      } else {
+        setOtpError(data.message || "Invalid OTP");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      setOtpError("Error connecting to server. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,6 +308,12 @@ export default function AuthPage() {
     // Clear previous submit errors
     setSubmitError("");
 
+    // For signup, check if OTP is verified
+    if (!isLogin && !otpVerified) {
+      setSubmitError("Please verify your email with OTP first");
+      return;
+    }
+
     // Mark all fields as touched for validation
     const allFields = ["email", "password"];
     if (!isLogin) {
@@ -238,6 +356,7 @@ export default function AuthPage() {
           "Login/Signup failed:",
           data.message || "Something went wrong!"
         );
+
         // Set submit error for display
         setSubmitError(data.message || "Something went wrong!");
         return;
@@ -364,24 +483,82 @@ export default function AuthPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
             </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
-                errors.email && touched.email
-                  ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              }`}
-              placeholder="your@email.com"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  errors.email && touched.email
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
+                placeholder="your@email.com"
+                required
+              />
+              {!isLogin && (
+                <Button
+                  type="button"
+                  onClick={handleGetOTP}
+                  disabled={otpLoading || !formData.email}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  {otpLoading ? "Sending..." : otpSent ? "Resend" : "Get OTP"}
+                </Button>
+              )}
+            </div>
             {errors.email && touched.email && (
               <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
+            {otpError && (
+              <p className="text-red-500 text-xs mt-1">{otpError}</p>
+            )}
+            {otpSent && !otpVerified && (
+              <p className="text-green-600 text-xs mt-1">
+                OTP sent to your email! Check your inbox.
+              </p>
+            )}
+            {otpVerified && (
+              <p className="text-green-600 text-xs mt-1">
+                ✅ Email verified successfully!
+              </p>
+            )}
           </div>
+
+          {/* OTP Input - Only show for signup and when OTP is sent */}
+          {!isLogin && otpSent && !otpVerified && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Enter OTP
+              </label>
+              <div className="space-y-3">
+                <OTPInput
+                  value={formData.otp}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, otp: value }))
+                  }
+                  length={6}
+                  className="w-12 h-12"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleVerifyOTP}
+                    disabled={otpLoading || formData.otp.length !== 6}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {otpLoading ? "Verifying..." : "Verify OTP"}
+                  </Button>
+                </div>
+                {errors.otp && (
+                  <p className="text-red-500 text-xs">{errors.otp}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -478,9 +655,18 @@ export default function AuthPage() {
 
           <button
             type="submit"
-            className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all transform hover:scale-105"
+            disabled={!isLogin && (!otpSent || !otpVerified)}
+            className={`w-full py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${
+              !isLogin && (!otpSent || !otpVerified)
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gray-900 text-white hover:bg-gray-800"
+            }`}
           >
-            {isLogin ? "Login" : "Sign Up"}
+            {isLogin
+              ? "Login"
+              : otpVerified
+              ? "Complete Sign Up"
+              : "Verify Email First"}
           </button>
         </form>
 
