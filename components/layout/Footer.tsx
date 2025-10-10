@@ -189,7 +189,7 @@ export default function Footer() {
       <div className="border-t border-gray-700 mt-8 py-4 text-center text-sm text-gray-400">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3">
           <span>
-            © {new Date().getFullYear()} MyShop Pvt Ltd. All Rights Reserved.
+            © {new Date().getFullYear()} ManualFits. All Rights Reserved.
           </span>
           <span>
             Registered Office: 123 Fashion Street, Mumbai • GSTIN:

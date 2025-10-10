@@ -4,9 +4,24 @@ import React, { useState, useEffect } from "react";
 import { safeLocalStorage } from "@/lib/storage";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import jwt from "jsonwebtoken";
-import { Eye, EyeOff, Mail } from "lucide-react";
-import { OTPInput } from "@/components/ui/otp-input";
+import { Eye, EyeOff, Mail, User, Lock, CheckCircle } from "lucide-react";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function AuthPage() {
   // const router = useRouter();
@@ -171,14 +186,11 @@ export default function AuthPage() {
 
   // OTP Functions
   const handleGetOTP = async () => {
-    if (!formData.email) {
-      setOtpError("Please enter your email first");
-      return;
-    }
-
+    // Only validate email before sending OTP
     const emailError = validateEmail(formData.email);
+
     if (emailError) {
-      setOtpError(emailError);
+      setOtpError("Please enter a valid email address");
       return;
     }
 
@@ -187,16 +199,14 @@ export default function AuthPage() {
 
     try {
       const res = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/signup`),
+        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/send-signup-otp`),
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            username: formData.username,
             email: formData.email,
-            password: formData.password,
           }),
         }
       );
@@ -208,7 +218,16 @@ export default function AuthPage() {
         setOtpError("");
         console.log("OTP sent successfully");
       } else {
-        setOtpError(data.message || "Failed to send OTP");
+        // Check if email already exists
+        if (data.message && data.message.includes("already registered")) {
+          setOtpError("Email already registered. Please login instead.");
+          // Optionally switch to login mode
+          setTimeout(() => {
+            setIsLogin(true);
+          }, 2000);
+        } else {
+          setOtpError(data.message || "Failed to send OTP");
+        }
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -218,8 +237,8 @@ export default function AuthPage() {
     }
   };
 
-  const handleVerifyOTP = async () => {
-    if (!formData.otp || formData.otp.length !== 6) {
+  const handleVerifyOTP = async (otpValue: string) => {
+    if (!otpValue || otpValue.length !== 6) {
       setOtpError("Please enter a valid 6-digit OTP");
       return;
     }
@@ -229,7 +248,7 @@ export default function AuthPage() {
 
     try {
       const res = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/verify-email`),
+        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/verify-signup-otp-only`),
         {
           method: "POST",
           headers: {
@@ -237,7 +256,7 @@ export default function AuthPage() {
           },
           body: JSON.stringify({
             email: formData.email,
-            otp: formData.otp,
+            otp: otpValue,
           }),
         }
       );
@@ -333,39 +352,34 @@ export default function AuthPage() {
 
     try {
       const { username, email, password } = formData;
-      const endpoint = isLogin ? "login" : "signup";
-      const body = isLogin
-        ? { email, password }
-        : { username, email, password };
 
-      const res = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/${endpoint}`),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error(
-          "Login/Signup failed:",
-          data.message || "Something went wrong!"
+      if (isLogin) {
+        // Login flow
+        const res = await fetch(
+          buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/login`),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          }
         );
 
-        // Set submit error for display
-        setSubmitError(data.message || "Something went wrong!");
-        return;
-      }
+        const data = await res.json();
 
-      console.log("Success:", data);
+        if (!res.ok) {
+          console.error(
+            "Login failed:",
+            data.message || "Something went wrong!"
+          );
+          setSubmitError(data.message || "Something went wrong!");
+          return;
+        }
 
-      // Handle remember me functionality
-      if (isLogin) {
+        console.log("Login Success:", data);
+
+        // Handle remember me functionality
         if (rememberMe) {
           safeLocalStorage.setItem("rememberedEmail", email);
           safeLocalStorage.setItem("rememberMe", "true");
@@ -373,32 +387,61 @@ export default function AuthPage() {
           safeLocalStorage.removeItem("rememberedEmail");
           safeLocalStorage.removeItem("rememberMe");
         }
-      }
 
-      // Save user data and token in localStorage
-      safeLocalStorage.setItem("user", JSON.stringify(data.user));
-      if (data.token) {
-        safeLocalStorage.setItem("token", data.token);
-        console.log("Token saved:", data.token);
-      } else {
-        console.error("No token received from server");
-        // Generate a proper JWT token for testing
-        const testToken = jwt.sign(
-          { id: data.user.id, email: data.user.email },
-          "your-secret-key-here",
-          { expiresIn: "7d" }
-        );
-        safeLocalStorage.setItem("token", testToken);
-        console.log("Using generated test token:", testToken);
-      }
+        // Save user data and token in localStorage
+        safeLocalStorage.setItem("user", JSON.stringify(data.user));
+        if (data.token) {
+          safeLocalStorage.setItem("token", data.token);
+          console.log("Token saved:", data.token);
+        }
 
-      if (isLogin) {
-        // Redirect to home page with page refresh
+        // Redirect to home page
         window.location.href = "/";
       } else {
-        // Auto-login after successful signup
-        console.log("Signup successful! You are now logged in.");
-        window.location.href = "/";
+        // Signup flow - Complete registration with verified OTP
+        if (otpVerified) {
+          const res = await fetch(
+            buildApiUrl(`${API_ENDPOINTS.AUTH_BASE}/complete-signup`),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                username: formData.username,
+                email: formData.email,
+                password: formData.password,
+                otp: formData.otp,
+              }),
+            }
+          );
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            console.error(
+              "Signup failed:",
+              data.message || "Something went wrong!"
+            );
+            setSubmitError(data.message || "Something went wrong!");
+            return;
+          }
+
+          console.log("Signup Success:", data);
+
+          // Save user data and token in localStorage
+          safeLocalStorage.setItem("user", JSON.stringify(data.user));
+          if (data.token) {
+            safeLocalStorage.setItem("token", data.token);
+            console.log("Token saved:", data.token);
+          }
+
+          // Redirect to home page
+          window.location.href = "/";
+        } else {
+          setSubmitError("Please verify your email with OTP first");
+          return;
+        }
       }
     } catch (err) {
       console.error("Error connecting to server:", err);
@@ -408,281 +451,314 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-300 flex items-center justify-center p-4 pt-15">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gray-900 p-6 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-2xl border-0">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">
             {isLogin ? "Welcome Back!" : "Join Us!"}
-          </h1>
-          <p className="text-white text-lg">
+          </CardTitle>
+          <CardDescription className="text-base">
             {randomTagline ||
               (isLogin ? "Welcome back!" : "Join our community!")}
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
 
         {/* Toggle Buttons */}
-        <div className="flex border-b">
-          <button
+        <div className="flex border-b mx-6">
+          <Button
+            variant={isLogin ? "default" : "ghost"}
             onClick={() => setIsLogin(true)}
-            className={`flex-1 py-4 font-semibold text-center transition-all ${
-              isLogin
-                ? "bg-gray-50 text-black border-b-2 border-gray-900"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
           >
             Login
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={!isLogin ? "default" : "ghost"}
             onClick={() => setIsLogin(false)}
-            className={`flex-1 py-4 font-semibold text-center transition-all ${
-              !isLogin
-                ? "bg-gray-50 text-black border-b-2 border-gray-900"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
           >
             Sign Up
-          </button>
+          </Button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Submit Error Display */}
-          {submitError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-red-600 text-sm">{submitError}</p>
-            </div>
-          )}
-
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
-                  errors.username && touched.username
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-                placeholder="Enter your cool username"
-                required
-              />
-              {errors.username && touched.username && (
-                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
-              )}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
-                  errors.email && touched.email
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-                placeholder="your@email.com"
-                required
-              />
-              {!isLogin && (
-                <Button
-                  type="button"
-                  onClick={handleGetOTP}
-                  disabled={otpLoading || !formData.email}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <Mail className="w-4 h-4" />
-                  {otpLoading ? "Sending..." : otpSent ? "Resend" : "Get OTP"}
-                </Button>
-              )}
-            </div>
-            {errors.email && touched.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Submit Error Display */}
+            {submitError && (
+              <Alert variant="destructive">
+                <AlertDescription>{submitError}</AlertDescription>
+              </Alert>
             )}
-            {otpError && (
-              <p className="text-red-500 text-xs mt-1">{otpError}</p>
-            )}
-            {otpSent && !otpVerified && (
-              <p className="text-green-600 text-xs mt-1">
-                OTP sent to your email! Check your inbox.
-              </p>
-            )}
-            {otpVerified && (
-              <p className="text-green-600 text-xs mt-1">
-                ✅ Email verified successfully!
-              </p>
-            )}
-          </div>
 
-          {/* OTP Input - Only show for signup and when OTP is sent */}
-          {!isLogin && otpSent && !otpVerified && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Enter OTP
-              </label>
-              <div className="space-y-3">
-                <OTPInput
-                  value={formData.otp}
-                  onChange={(value) =>
-                    setFormData((prev) => ({ ...prev, otp: value }))
-                  }
-                  length={6}
-                  className="w-12 h-12"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    onClick={handleVerifyOTP}
-                    disabled={otpLoading || formData.otp.length !== 6}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {otpLoading ? "Verifying..." : "Verify OTP"}
-                  </Button>
-                </div>
-                {errors.otp && (
-                  <p className="text-red-500 text-xs">{errors.otp}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:border-transparent ${
-                  errors.password && touched.password
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            {errors.password && touched.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-            )}
-          </div>
-
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="username" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={formData.username}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:border-transparent ${
-                    errors.confirmPassword && touched.confirmPassword
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-blue-500"
-                  }`}
-                  placeholder="••••••••"
+                  placeholder="Enter your cool username"
+                  className={
+                    errors.username && touched.username ? "border-red-500" : ""
+                  }
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
+                {errors.username && touched.username && (
+                  <p className="text-red-500 text-xs">{errors.username}</p>
+                )}
               </div>
-              {errors.confirmPassword && touched.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.confirmPassword}
-                </p>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Email
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="your@email.com"
+                  className={`flex-1 ${
+                    errors.email && touched.email ? "border-red-500" : ""
+                  }`}
+                  required
+                />
+                {!isLogin && (
+                  <Button
+                    type="button"
+                    onClick={handleGetOTP}
+                    disabled={otpLoading || !formData.email || !!errors.email}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    {otpLoading ? "Sending..." : otpSent ? "Resend" : "Get OTP"}
+                  </Button>
+                )}
+              </div>
+              {errors.email && touched.email && (
+                <p className="text-red-500 text-xs">{errors.email}</p>
+              )}
+              {otpError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{otpError}</AlertDescription>
+                </Alert>
+              )}
+              {otpSent && !otpVerified && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    OTP sent to your email! Check your inbox.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {otpVerified && (
+                <Alert>
+                  {/* <CheckCircle className="h-4 w-4 text-green-600" /> */}
+                  <AlertDescription className="text-green-500 font-medium">
+                    OTP Verified Successfully!
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
-          )}
 
-          {isLogin && (
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="rounded text-blue-500"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+            {/* OTP Input - Only show for signup and when OTP is sent */}
+            {!isLogin && otpSent && !otpVerified && (
+              <div className="space-y-4">
+                <Label className="text-center block">Enter OTP</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={formData.otp}
+                    onChange={(value) => {
+                      setFormData((prev) => ({ ...prev, otp: value }));
+                      // Auto-verify when 6 digits are entered
+                      if (value.length === 6) {
+                        handleVerifyOTP(value);
+                      }
+                    }}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                {otpLoading && (
+                  <div className="flex justify-center">
+                    <p className="text-sm text-gray-600">Verifying OTP...</p>
+                  </div>
+                )}
+                {errors.otp && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{errors.otp}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="••••••••"
+                  className={`pr-10 ${
+                    errors.password && touched.password ? "border-red-500" : ""
+                  }`}
+                  required
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
-              </label>
-              <a href="#" className="text-sm text-blue-500 hover:text-blue-700">
-                Forgot password?
-              </a>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              {errors.password && touched.password && (
+                <p className="text-red-500 text-xs">{errors.password}</p>
+              )}
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={!isLogin && (!otpSent || !otpVerified)}
-            className={`w-full py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${
-              !isLogin && (!otpSent || !otpVerified)
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gray-900 text-white hover:bg-gray-800"
-            }`}
-          >
-            {isLogin
-              ? "Login"
-              : otpVerified
-              ? "Complete Sign Up"
-              : "Verify Email First"}
-          </button>
-        </form>
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="flex items-center gap-2"
+                >
+                  <Lock className="w-4 h-4" />
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="••••••••"
+                    className={`pr-10 ${
+                      errors.confirmPassword && touched.confirmPassword
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {errors.confirmPassword && touched.confirmPassword && (
+                  <p className="text-red-500 text-xs">
+                    {errors.confirmPassword}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isLogin && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) =>
+                      setRememberMe(checked as boolean)
+                    }
+                  />
+                  <Label htmlFor="remember" className="text-sm">
+                    Remember me
+                  </Label>
+                </div>
+                <Button variant="link" className="p-0 h-auto text-sm">
+                  Forgot password?
+                </Button>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={
+                !isLogin &&
+                (!otpSent ||
+                  !otpVerified ||
+                  !!errors.email ||
+                  !!errors.username ||
+                  !!errors.password ||
+                  !!errors.confirmPassword ||
+                  !formData.email ||
+                  !formData.username ||
+                  !formData.password ||
+                  !formData.confirmPassword)
+              }
+              className="w-full"
+              size="lg"
+            >
+              {isLogin
+                ? "Login"
+                : otpVerified
+                ? "Complete Sign Up"
+                : "Verify Email First"}
+            </Button>
+          </form>
+        </CardContent>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="px-6 py-4 text-center border-t">
+          <p className="text-sm text-muted-foreground">
             {isLogin ? "New here? " : "Already have an account? "}
-            <button
+            <Button
+              variant="link"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-500 hover:text-blue-700 font-semibold"
+              className="p-0 h-auto text-sm"
             >
               {isLogin ? "Create an account" : "Sign in"}
-            </button>
+            </Button>
           </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
