@@ -1,164 +1,170 @@
-// Cloudinary utility functions for frontend
+/**
+ * Cloudinary upload utilities for frontend
+ */
 
 export interface CloudinaryUploadResponse {
   success: boolean;
-  message: string;
-  data?: {
-    url: string;
-    public_id: string;
-  };
+  message?: string;
+  url?: string;
+  public_id?: string;
   error?: string;
-}
-
-export interface CloudinaryMultipleUploadResponse {
-  success: boolean;
-  message: string;
   data?: {
-    successful: Array<{
+    url?: string;
+    public_id?: string;
+    successful?: Array<{
       url: string;
       public_id: string;
     }>;
-    failed: Array<{
+    failed?: Array<{
       error: string;
     }>;
   };
-  error?: string;
 }
 
-// Upload single image
+/**
+ * Upload a single image file to the backend API
+ */
 export const uploadSingleImage = async (
   file: File,
-  token: string
+  token?: string
 ): Promise<CloudinaryUploadResponse> => {
   try {
-    console.log("Starting upload:", {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
+    console.log("uploadSingleImage: Starting upload with file:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      hasToken: !!token,
     });
-
-    if (!token) {
-      console.error("No token provided");
-      return {
-        success: false,
-        message: "No authentication token provided",
-        error: "Authentication required",
-      };
-    }
 
     const formData = new FormData();
     formData.append("image", file);
 
-    console.log("Sending request to /api/upload/single");
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await fetch("/api/upload/single", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: formData,
     });
 
-    console.log("Response status:", response.status);
-    console.log("Response headers:", response.headers);
+    console.log("uploadSingleImage: Response received:", {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Upload failed with status:", response.status, errorText);
-      return {
-        success: false,
-        message: `Upload failed: ${response.status} ${response.statusText}`,
-        error: errorText,
-      };
+    let result;
+    try {
+      result = await response.json();
+    } catch (jsonError) {
+      console.error(
+        "uploadSingleImage: Failed to parse JSON response:",
+        jsonError
+      );
+      throw new Error("Invalid response from server");
     }
 
-    const result = await response.json();
-    console.log("Upload result:", result);
+    if (!response.ok) {
+      console.error("Upload API error:", result);
+      throw new Error(result?.error || result?.message || "Upload failed");
+    }
+
     return result;
   } catch (error) {
-    console.error("Upload error:", error);
-    return {
+    console.error("uploadSingleImage: Catch block - Upload error:", error);
+    console.error("uploadSingleImage: Error type:", typeof error);
+    console.error("uploadSingleImage: Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : "No stack trace",
+    });
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Upload failed";
+
+    const errorResponse = {
       success: false,
-      message: "Upload failed",
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
     };
+
+    console.error("uploadSingleImage: Returning error object:", errorResponse);
+    return errorResponse;
   }
 };
 
-// Upload multiple images
+/**
+ * Upload multiple image files to the backend API
+ */
 export const uploadMultipleImages = async (
   files: File[],
-  token: string
-): Promise<CloudinaryMultipleUploadResponse> => {
+  token?: string
+): Promise<CloudinaryUploadResponse> => {
   try {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append("images", file);
     });
 
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await fetch("/api/upload/multiple", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: formData,
     });
 
     const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Upload failed");
+    }
+
     return result;
   } catch (error) {
-    console.error("Multiple upload error:", error);
+    console.error("Upload error:", error);
     return {
       success: false,
-      message: "Upload failed",
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : "Upload failed",
     };
   }
 };
 
-// Delete image
+/**
+ * Delete an image from Cloudinary using public_id
+ */
 export const deleteImage = async (
   publicId: string,
-  token: string
-): Promise<{ success: boolean; message: string }> => {
+  token?: string
+): Promise<boolean> => {
   try {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`/api/upload/${publicId}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers,
     });
 
     const result = await response.json();
-    return result;
+
+    if (!response.ok) {
+      throw new Error(result.error || "Delete failed");
+    }
+
+    return result.success;
   } catch (error) {
     console.error("Delete error:", error);
-    return {
-      success: false,
-      message: "Delete failed",
-    };
+    return false;
   }
-};
-
-// Generate Cloudinary URL with transformations
-export const getCloudinaryUrl = (
-  publicId: string,
-  transformations?: {
-    width?: number;
-    height?: number;
-    crop?: string;
-    quality?: string;
-    format?: string;
-  }
-): string => {
-  const baseUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
-
-  if (transformations) {
-    const transformString = Object.entries(transformations)
-      .map(([key, value]) => `${key}_${value}`)
-      .join(",");
-    return `${baseUrl}/${transformString}/${publicId}`;
-  }
-
-  return `${baseUrl}/${publicId}`;
 };

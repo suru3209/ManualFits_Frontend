@@ -41,7 +41,6 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
 
   const handleImageUpdate = (url: string, publicId: string) => {
     // This will be called when image is uploaded/removed
-    console.log("Image updated:", { url, publicId });
   };
 
   const handleProfileUpdate = (updatedUser: unknown) => {

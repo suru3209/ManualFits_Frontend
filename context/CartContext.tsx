@@ -13,6 +13,9 @@ import { buildApiUrl } from "@/lib/api";
 export interface CartItem extends Product {
   qty: number;
   _id?: string; // MongoDB ObjectId as string
+  selectedSize?: string;
+  selectedColor?: string;
+  selectedVariant?: any; // Variant object
 }
 
 interface CartContextType {
@@ -164,14 +167,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
               typeof item.productId === "object" &&
               item.productId._id
             ) {
-              // Product is populated, use it directly
+              // Product is populated, transform to new schema format
+              const product = item.productId;
+              const transformedProduct = {
+                ...product,
+                // Map new schema fields to old expected fields for backward compatibility
+                name: product.title || product.name,
+                price: product.variants?.[0]?.price || product.price || 0,
+                originalPrice:
+                  product.variants?.[0]?.originalPrice ||
+                  product.originalPrice ||
+                  0,
+                images: product.variants?.[0]?.images || product.images || [],
+                qty: item.quantity,
+                // Add variant details
+                selectedSize: item.size || product.variants?.[0]?.size,
+                selectedColor: item.color || product.variants?.[0]?.color,
+                selectedVariant: product.variants?.find(
+                  (v: any) =>
+                    v.size === (item.size || product.variants?.[0]?.size) &&
+                    v.color === (item.color || product.variants?.[0]?.color)
+                ),
+              };
+
               console.log("CartContext - Using populated product:", {
-                productId: item.productId._id,
-                product: item.productId,
-                price: item.productId?.price,
-                name: item.productId?.name,
+                productId: product._id,
+                title: product.title,
+                name: transformedProduct.name,
+                price: transformedProduct.price,
+                variants: product.variants?.length || 0,
+                selectedSize: transformedProduct.selectedSize,
+                selectedColor: transformedProduct.selectedColor,
+                selectedVariant: transformedProduct.selectedVariant,
               });
-              return { ...item.productId, qty: item.quantity };
+              return transformedProduct;
             } else {
               // Product not populated, this shouldn't happen with proper populate
               console.warn(
@@ -205,6 +234,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("CartContext - Error loading cart:", error);
+
+      // Handle connection errors
+      if (
+        error instanceof TypeError &&
+        error.message.includes("Failed to fetch")
+      ) {
+        console.error(
+          "CartContext - Backend server connection failed, loading from localStorage"
+        );
+        // Load from localStorage as fallback
+        const savedCart = safeLocalStorage.getItem("cart");
+        if (savedCart) {
+          try {
+            const cartData = JSON.parse(savedCart);
+            setCartItems(cartData);
+            console.log(
+              "CartContext - Loaded cart from localStorage as fallback"
+            );
+          } catch (parseError) {
+            console.error(
+              "CartContext - Error parsing localStorage cart:",
+              parseError
+            );
+            setCartItems([]);
+          }
+        } else {
+          setCartItems([]);
+        }
+      }
     }
   };
 
@@ -260,6 +318,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemId: getStableId(item),
     });
 
+    // Debug variant details
+    console.log("CartContext - Item variant details:", {
+      selectedSize: item.selectedSize,
+      selectedColor: item.selectedColor,
+      selectedVariant: item.selectedVariant,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      sku: item.sku,
+      images: item.images,
+    });
+
     if (!isLoggedIn) {
       // Guest user - add to localStorage
       const productId = getStableId(item);
@@ -269,14 +338,77 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       let updatedCart;
       if (existingItem) {
-        updatedCart = cartItems.map((cartItem) =>
-          getStableId(cartItem) === productId
-            ? { ...cartItem, qty: cartItem.qty + (item.qty || 1) }
-            : cartItem
-        );
+        // Check if it's the same variant (same size and color)
+        const isSameVariant =
+          existingItem.selectedSize === item.selectedSize &&
+          existingItem.selectedColor === item.selectedColor;
+
+        if (isSameVariant) {
+          // Check stock for same variant
+          const newQty = existingItem.qty + (item.qty || 1);
+          if (
+            existingItem.selectedVariant &&
+            newQty > existingItem.selectedVariant.stock
+          ) {
+            console.log(
+              "CartContext - Insufficient stock for guest cart (same variant):",
+              {
+                requested: newQty,
+                available: existingItem.selectedVariant.stock,
+                variant: `${item.selectedSize}-${item.selectedColor}`,
+              }
+            );
+            return; // Don't add if insufficient stock
+          }
+
+          updatedCart = cartItems.map((cartItem) =>
+            getStableId(cartItem) === productId
+              ? { ...cartItem, qty: newQty }
+              : cartItem
+          );
+        } else {
+          // Different variant, add as new item
+          if (
+            item.selectedVariant &&
+            (item.qty || 1) > item.selectedVariant.stock
+          ) {
+            console.log(
+              "CartContext - Insufficient stock for new guest cart variant:",
+              {
+                requested: item.qty || 1,
+                available: item.selectedVariant.stock,
+                variant: `${item.selectedSize}-${item.selectedColor}`,
+              }
+            );
+            return; // Don't add if insufficient stock
+          }
+
+          updatedCart = [...cartItems, { ...item, qty: item.qty || 1 }];
+        }
       } else {
+        // New item - check stock
+        if (
+          item.selectedVariant &&
+          (item.qty || 1) > item.selectedVariant.stock
+        ) {
+          console.log(
+            "CartContext - Insufficient stock for new guest cart item:",
+            {
+              requested: item.qty || 1,
+              available: item.selectedVariant.stock,
+              variant: `${item.selectedSize}-${item.selectedColor}`,
+            }
+          );
+          return; // Don't add if insufficient stock
+        }
+
         updatedCart = [...cartItems, { ...item, qty: item.qty || 1 }];
       }
+
+      console.log("CartContext - Final cart item being saved:", {
+        ...item,
+        qty: item.qty || 1,
+      });
 
       setCartItems(updatedCart);
       saveGuestCart(updatedCart);
@@ -292,6 +424,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.log("CartContext - Adding to database cart:", {
         productId,
         quantity: item.qty || 1,
+        selectedSize: item.selectedSize,
+        selectedColor: item.selectedColor,
         token: token ? "Present" : "Missing",
       });
 
@@ -304,6 +438,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           productId,
           quantity: item.qty || 1,
+          size: item.selectedSize,
+          color: item.selectedColor,
         }),
       });
 
@@ -322,6 +458,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("CartContext - Error adding to cart:", error);
+
+      // Handle specific error types
+      if (
+        error instanceof TypeError &&
+        error.message.includes("Failed to fetch")
+      ) {
+        console.error(
+          "CartContext - Backend server connection failed, falling back to localStorage"
+        );
+        // Fallback to localStorage for guest users
+        const productId = getStableId(item);
+        const existingItem = cartItems.find(
+          (cartItem) => getStableId(cartItem) === productId
+        );
+
+        let updatedCart;
+        if (existingItem) {
+          updatedCart = cartItems.map((cartItem) =>
+            getStableId(cartItem) === productId
+              ? { ...cartItem, qty: (cartItem.qty || 1) + (item.qty || 1) }
+              : cartItem
+          );
+        } else {
+          updatedCart = [...cartItems, { ...item, qty: item.qty || 1 }];
+        }
+
+        setCartItems(updatedCart);
+        saveGuestCart(updatedCart);
+        console.log("CartContext - Item added to localStorage as fallback");
+      }
     }
   };
 
@@ -358,8 +524,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const increaseQty = async (id: number | string) => {
     if (!isLoggedIn) {
       // Guest user - increase quantity in localStorage
+      const item = cartItems.find((item) => getStableId(item) === id);
+      if (!item) return;
+
+      // Check stock before increasing
+      const newQty = item.qty + 1;
+      if (item.selectedVariant && newQty > item.selectedVariant.stock) {
+        console.log(
+          "CartContext - Cannot increase quantity, insufficient stock:",
+          {
+            requested: newQty,
+            available: item.selectedVariant.stock,
+            variant: `${item.selectedSize}-${item.selectedColor}`,
+          }
+        );
+        return; // Don't increase if insufficient stock
+      }
+
       const updatedCart = cartItems.map((item) =>
-        getStableId(item) === id ? { ...item, qty: item.qty + 1 } : item
+        getStableId(item) === id ? { ...item, qty: newQty } : item
       );
       setCartItems(updatedCart);
       saveGuestCart(updatedCart);
@@ -370,6 +553,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Logged-in user - increase quantity in database
     try {
       const token = safeLocalStorage.getItem("token");
+      const cartItem = cartItems.find((item) => getStableId(item) === id);
 
       const response = await fetch(buildApiUrl("/api/user/cart"), {
         method: "POST",
@@ -380,6 +564,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           productId: id,
           quantity: 1,
+          size: cartItem?.selectedSize,
+          color: cartItem?.selectedColor,
         }),
       });
 

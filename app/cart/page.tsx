@@ -1,20 +1,32 @@
 "use client";
-import React from "react";
-import { ShoppingBag } from "lucide-react";
+import React, { useState } from "react";
+import { ShoppingBag, Heart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "../../context/CartContext";
-import { Product } from "../../types/types"; // ✅ Product interface import
+import { useWishlist } from "../../context/WishlistContext";
+import { Product } from "../../types/types";
 import { useRouter } from "next/navigation";
-import DynamicBreadcrumb from "@/lib/breadcrumb";
-import { TrashIcon } from "@/components/ui/skiper-ui/skiper42";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/context/ToastContext";
 
 export default function CartPage() {
   const { cartItems, increaseQty, decreaseQty, removeFromCart } = useCart();
+  const { addToWishlist } = useWishlist();
+  const { showToast } = useToast();
   const router = useRouter();
-
-  // Debug cart items
-  console.log("CartPage - cartItems:", cartItems);
-  console.log("CartPage - First item:", cartItems[0]);
+  const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Total calculations
   const subtotal = cartItems.reduce(
@@ -24,114 +36,386 @@ export default function CartPage() {
   const tax = +(subtotal * 0.05).toFixed(2);
   const total = +(subtotal + tax).toFixed(2);
 
-  if (cartItems.length === 0)
+  const proceedToCheckout = () => {
+    router.push("/checkout");
+  };
+
+  const moveToWishlist = async (item: any) => {
+    try {
+      console.log({
+        itemId: item._id,
+        itemName: item.name,
+      });
+
+      // Add to wishlist using context (this handles API call and updates context)
+      addToWishlist(item);
+
+      // Remove from cart using cart context - use correct ID
+      await removeFromCart(item._id);
+
+      showToast("Moved to wishlist");
+    } catch (error) {
+      console.error("Error moving to wishlist:", error);
+      showToast("Failed to move to wishlist");
+    }
+  };
+
+  if (cartItems.length === 0) {
     return (
-      <div className="mx-auto  p-5 lg:p-20 bg-gray-300 min-h-screen flex flex-col justify-center items-center">
-        <div className="flex lg:pt-50 lg:pb-50 lg:w-330 flex-col items-center justify-center">
-          <span className="absolute top-16 bg-gray-300 w-screen">
-            <DynamicBreadcrumb />
-          </span>
-          <ShoppingBag className="w-20 h-20 opacity-40 mb-4" />
-          <p className="text-lg text-gray-500">Your cart is empty!</p>
-          <Link
-            href="/products"
-            className="mt-4 px-6 py-2 bg-black text-white rounded hover:bg-gray-800"
-          >
-            Continue Shopping
-          </Link>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-6">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.back()}
+                    className="p-0 h-auto hover:bg-transparent"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Cart</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+            <div className="text-center py-12">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">
+                Your cart is empty
+              </p>
+              <p className="text-muted-foreground/70 mb-6">
+                Add some items to get started
+              </p>
+              <Link
+                href="/products"
+                className="inline-block px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
+  }
 
   return (
-    <div className="mx-auto px-5 pb-10 bg-gray-300 min-h-screen lg:px-20">
-      <div className="lg:mb-6 lg:-ml-10">
-        <DynamicBreadcrumb />
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
+          {/* Breadcrumb with Back Button */}
+          <div className="mb-6">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.back()}
+                    className="p-0 h-auto hover:bg-transparent"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    Cart ({cartItems.length} items)
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
 
-      {/* <h1 className="text-3xl font-bold mb-6">Your Cart</h1> */}
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Cart Items */}
-        <div className="flex-1 bg-gray-50 min-h-100 shadow-md rounded-lg p-4 space-y-3">
-          {cartItems.map((item: Product & { qty: number }) => {
-            const stableId =
-              (item as unknown as { _id?: string })._id ?? item.id;
-            return (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {cartItems.map((item: any, index: number) => (
               <div
-                key={stableId}
-                className="flex justify-between items-center border-b py-3"
+                key={index}
+                className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 hover:shadow-md transition-shadow w-full"
               >
-                <div className="flex items-center gap-4">
-                  {/* Product Image (Clickable) */}
-                  {item.images?.[0] && (
-                    <img
-                      src={item.images[0]}
-                      alt={item.name}
-                      onClick={() => router.push(`/products/${stableId}`)}
-                      className="w-20 h-20 object-contain rounded cursor-pointer"
-                    />
-                  )}
+                <div className="space-y-3">
+                  {/* Product Image */}
+                  <div
+                    className="w-full h-72 bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => {
+                      const productId =
+                        item.productId?._id || item.product?._id || item._id;
+                      if (productId) {
+                        router.push(`/products/${productId}`);
+                      }
+                    }}
+                  >
+                    {item.images && item.images.length > 0 ? (
+                      <Image
+                        src={item.images[0]}
+                        alt={item.name || "Product"}
+                        width={160}
+                        height={160}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
+                        alt="No Image"
+                        width={160}
+                        height={160}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
 
-                  <div>
-                    <p
-                      className="font-semibold cursor-pointer hover:underline"
-                      onClick={() => router.push(`/products/${stableId}`)}
+                  {/* Product Info */}
+                  <div className="space-y-1">
+                    <h3
+                      className="font-semibold text-base line-clamp-2 cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => {
+                        const productId =
+                          item.productId?._id || item.product?._id || item._id;
+                        if (productId) {
+                          router.push(`/products/${productId}`);
+                        }
+                      }}
                     >
-                      {item.name}
+                      {item.name || "Product Name"}
+                    </h3>
+                    <p className="text-muted-foreground text-xs line-clamp-2">
+                      {item.description || "Product description not available"}
                     </p>
-                    <p className="text-gray-500 text-sm">{item.brand}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <button
-                        onClick={() => decreaseQty(stableId)}
-                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                    <div className="flex items-center gap-1">
+                      <p className="text-base font-bold text-primary">
+                        ₹{item.price || "0"}
+                      </p>
+                      {item.originalPrice &&
+                        item.originalPrice > item.price && (
+                          <p className="text-xs text-muted-foreground line-through">
+                            ₹{item.originalPrice}
+                          </p>
+                        )}
+                    </div>
+                    {item.brand && (
+                      <p className="text-xs text-primary/80 font-medium">
+                        Brand: {item.brand}
+                      </p>
+                    )}
+                    {item.selectedSize && item.selectedColor && (
+                      <p className="text-xs text-gray-600">
+                        Size: {item.selectedSize} | Color: {item.selectedColor}
+                      </p>
+                    )}
+                    {item.selectedVariant && (
+                      <p className="text-xs text-gray-600">
+                        Stock: {item.selectedVariant.stock} available
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Quantity Controls */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center border rounded-lg">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={
+                          loadingActions[`quantity-${item._id}`] ||
+                          item.qty <= 1
+                        }
+                        onClick={async () => {
+                          const productId = item._id;
+                          console.log({
+                            productId,
+                            itemName: item.name,
+                          });
+
+                          setLoadingActions((prev) => ({
+                            ...prev,
+                            [`quantity-${item._id}`]: true,
+                          }));
+
+                          try {
+                            await decreaseQty(productId);
+                          } catch (error) {
+                            console.error("Error updating quantity:", error);
+                            showToast("Failed to update quantity");
+                          } finally {
+                            setLoadingActions((prev) => ({
+                              ...prev,
+                              [`quantity-${item._id}`]: false,
+                            }));
+                          }
+                        }}
+                        className="h-7 w-7 p-0"
                       >
                         -
-                      </button>
-                      <span>{item.qty}</span>
-                      <button
-                        onClick={() => increaseQty(stableId)}
-                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      </Button>
+                      <span className="px-3 py-1 text-sm">
+                        {loadingActions[`quantity-${item._id}`]
+                          ? "..."
+                          : item.qty}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={
+                          loadingActions[`quantity-${item._id}`] ||
+                          (item.selectedVariant &&
+                            item.qty >= item.selectedVariant.stock)
+                        }
+                        title={
+                          item.selectedVariant &&
+                          item.qty >= item.selectedVariant.stock
+                            ? `Only ${item.selectedVariant.stock} items available`
+                            : "Increase quantity"
+                        }
+                        onClick={async () => {
+                          const productId = item._id;
+                          console.log({
+                            productId,
+                            itemName: item.name,
+                          });
+
+                          setLoadingActions((prev) => ({
+                            ...prev,
+                            [`quantity-${item._id}`]: true,
+                          }));
+
+                          try {
+                            await increaseQty(productId);
+                          } catch (error) {
+                            console.error("Error updating quantity:", error);
+                            showToast("Failed to update quantity");
+                          } finally {
+                            setLoadingActions((prev) => ({
+                              ...prev,
+                              [`quantity-${item._id}`]: false,
+                            }));
+                          }
+                        }}
+                        className="h-7 w-7 p-0"
                       >
                         +
-                      </button>
-                      <button
-                        onClick={() => removeFromCart(stableId)}
-                        className="ml-4 text-gray-500 hover:text-gray-900"
+                      </Button>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      {/* Move to Wishlist Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={loadingActions[`wishlist-${item._id}`]}
+                        onClick={async () => {
+                          const productId = item._id;
+
+                          setLoadingActions((prev) => ({
+                            ...prev,
+                            [`wishlist-${item._id}`]: true,
+                          }));
+
+                          try {
+                            await moveToWishlist(item);
+                          } catch (error) {
+                            console.error("Error moving to wishlist:", error);
+                            showToast("Failed to move to wishlist");
+                          } finally {
+                            setLoadingActions((prev) => ({
+                              ...prev,
+                              [`wishlist-${item._id}`]: false,
+                            }));
+                          }
+                        }}
+                        className="text-xs px-2 py-1 text-primary hover:bg-primary/10 hover:text-primary p-2"
+                        title="Move to Wishlist"
                       >
-                        <TrashIcon />
-                      </button>
+                        <Heart className="h-4 w-4" />
+                      </Button>
+
+                      {/* Remove from Cart Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={loadingActions[`remove-${item._id}`]}
+                        onClick={async () => {
+                          // Use the correct product ID - for cart items, use item._id directly
+                          const productId = item._id;
+                          console.log({
+                            productId,
+                            itemName: item.name,
+                          });
+
+                          setLoadingActions((prev) => ({
+                            ...prev,
+                            [`remove-${item._id}`]: true,
+                          }));
+
+                          try {
+                            await removeFromCart(productId);
+                            showToast("Item removed from cart");
+                          } catch (error) {
+                            console.error("Error removing from cart:", error);
+                            showToast("Failed to remove item");
+                          } finally {
+                            setLoadingActions((prev) => ({
+                              ...prev,
+                              [`remove-${item._id}`]: false,
+                            }));
+                          }
+                        }}
+                        className="text-xs px-2 py-1 text-destructive hover:bg-destructive/10 hover:text-destructive p-2"
+                        title="Remove from Cart"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                </div>
-                <p className="font-semibold">₹{(item.price || 0) * item.qty}</p>
-              </div>
-            );
-          })}
-        </div>
 
-        {/* Order Summary (Sticky) */}
-        <div className="lg:w-1/3">
-          <div className="bg-gray-50 rounded-lg p-6 h-fit shadow-md sticky top-24">
+                  {/* Total Price */}
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">
+                      Total:
+                    </span>
+                    <span className="font-bold text-lg">
+                      ₹{(item.price || 0) * item.qty}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Order Summary */}
+          <div className="bg-card rounded-lg border shadow-sm p-6 sticky top-24">
             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-            <div className="flex justify-between mb-2">
-              <span>Subtotal:</span>
-              <span>₹{subtotal}</span>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Subtotal:</span>
+                <span>₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax (5%):</span>
+                <span>₹{tax}</span>
+              </div>
+              <div className="border-t pt-2">
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span>₹{total}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between mb-4">
-              <span>Tax (5%):</span>
-              <span>₹{tax}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg mb-4">
-              <span>Total:</span>
-              <span>₹{total}</span>
-            </div>
-            <Link
-              href="/checkout"
-              className="w-full block text-center bg-gray-600 hover:bg-gray-900 text-white py-2 mt-4 rounded-lg font-semibold transition-all"
+            <Button
+              onClick={proceedToCheckout}
+              className="w-full mt-4 bg-primary hover:bg-primary/90"
             >
               Proceed to Checkout
-            </Link>
+            </Button>
           </div>
         </div>
       </div>

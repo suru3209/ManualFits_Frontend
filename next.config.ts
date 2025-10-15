@@ -7,6 +7,7 @@ const nextConfig = {
       "images.pexels.com",
       "pbs.twimg.com",
       "res.cloudinary.com",
+      "via.placeholder.com",
     ], // ✅ external image domains
   },
 };

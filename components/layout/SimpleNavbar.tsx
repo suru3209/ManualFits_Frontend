@@ -26,8 +26,6 @@ export default function SimpleNavbar() {
     if (user) {
       try {
         const userData = JSON.parse(user);
-        // console.log("SimpleNavbar - User data from localStorage:", userData);
-        // console.log("SimpleNavbar - User image:", userData.image);
         setUserProfile({ image: userData.image || "" });
       } catch (error) {
         console.error("Error parsing user data:", error);

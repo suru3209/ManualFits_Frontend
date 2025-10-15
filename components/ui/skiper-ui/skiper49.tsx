@@ -177,6 +177,7 @@ const Carousel_003 = ({
                 alt={image.alt}
                 width={800}
                 height={600}
+                style={{ width: "auto", height: "auto" }}
               />
             </SwiperSlide>
           ))}

@@ -55,7 +55,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       if (multiple) {
         const multipleResult = await uploadMultipleImages(fileArray, token);
-        if (multipleResult.success && multipleResult.data) {
+        if (multipleResult.success && multipleResult.data?.successful) {
           const newUrls = multipleResult.data.successful.map(
             (item) => item.url
           );
@@ -63,16 +63,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           setUploadedImages(updatedImages);
           onUpload(updatedImages);
         } else {
-          setUploadErrors([multipleResult.message || "Upload failed"]);
+          setUploadErrors([
+            multipleResult.message || multipleResult.error || "Upload failed",
+          ]);
         }
       } else {
         result = await uploadSingleImage(fileArray[0], token);
-        if (result.success && result.data) {
+        if (result.success && result.data?.url) {
           const updatedImages = [...uploadedImages, result.data.url];
           setUploadedImages(updatedImages);
           onUpload(updatedImages);
         } else {
-          setUploadErrors([result.message || "Upload failed"]);
+          setUploadErrors([result.message || result.error || "Upload failed"]);
         }
       }
     } catch (error) {

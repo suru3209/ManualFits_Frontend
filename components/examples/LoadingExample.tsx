@@ -9,34 +9,40 @@ import {
   Skeleton,
   ProductSkeleton,
 } from "@/components/ui/loading";
-import { useLoading } from "@/hooks/useLoading";
+import { useGlobalLoading } from "@/context/LoadingContext";
 
 export default function LoadingExample() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [showPage, setShowPage] = useState(false);
-  // const { startLoading, stopLoading, withLoading } = useLoading();
+  const { startLoading, stopLoading } = useGlobalLoading();
 
-  // Example of using withLoading hook
-  // const simulateAsyncOperation = withLoading(async (delay: number = 2000) => {
-  //   await new Promise((resolve) => setTimeout(resolve, delay));
-  //   return "Operation completed!";
-  // });
+  // Example of using loading hook
+  const simulateAsyncOperation = async (delay: number = 2000) => {
+    startLoading("Processing your request...");
+    try {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return "Operation completed!";
+    } finally {
+      stopLoading();
+    }
+  };
 
-  // const handleAsyncOperation = async () => {
-  //   try {
-  //     const result = await simulateAsyncOperation(3000);
-  //     console.log(result);
-  //   } catch (error) {
-  //     console.error("Operation failed:", error);
-  //   }
-  // };
+  const handleAsyncOperation = async () => {
+    try {
+      const result = await simulateAsyncOperation(3000);
+      console.log(result);
+    } catch (error) {
+      console.error("Operation failed:", error);
+      stopLoading();
+    }
+  };
 
-  // const handleGlobalLoading = () => {
-  //   startGlobal("Processing your request...");
-  //   setTimeout(() => {
-  //     stopGlobal();
-  //   }, 3000);
-  // };
+  const handleGlobalLoading = () => {
+    startLoading("Processing your request...");
+    setTimeout(() => {
+      stopLoading();
+    }, 3000);
+  };
 
   if (showPage) {
     return <LoadingPage message="Loading example page..." />;
@@ -94,14 +100,13 @@ export default function LoadingExample() {
             <CardTitle>Interactive Loading</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={() => {}} className="w-full" disabled>
+            <Button onClick={handleAsyncOperation} className="w-full">
               Simulate Async Operation
             </Button>
             <Button
-              onClick={() => {}}
+              onClick={handleGlobalLoading}
               variant="outline"
               className="w-full"
-              disabled
             >
               Global Loading Overlay
             </Button>

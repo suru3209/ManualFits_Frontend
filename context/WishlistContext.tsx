@@ -40,7 +40,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         user !== "null"
       );
 
-      console.log("WishlistContext - Login Check:", {
+      console.log("WishlistContext - Login status check:", {
         token: token ? "Present" : "Missing",
         user: user ? "Present" : "Missing",
         userValue: user,
@@ -84,6 +84,11 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         token ? "Present" : "Missing"
       );
 
+      // If no token, skip database loading
+      if (!token) {
+        return;
+      }
+
       const response = await fetch(buildApiUrl("/api/user/wishlist"), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -97,27 +102,38 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("WishlistContext - Wishlist API response data:", data);
 
         if (data.wishlist && data.wishlist.length > 0) {
           // Convert wishlist items to Product format
           const wishlistItems = data.wishlist.map((item: any) => {
-            console.log("WishlistContext - Processing wishlist item:", item);
-
             // Check if product is already populated
             if (
               item.productId &&
               typeof item.productId === "object" &&
               item.productId._id
             ) {
-              // Product is populated, use it directly
-              console.log("WishlistContext - Using populated product:", {
-                productId: item.productId._id,
-                product: item.productId,
-                price: item.productId?.price,
-                name: item.productId?.name,
+              // Product is populated, transform to new schema format
+              const product = item.productId;
+              const transformedProduct = {
+                ...product,
+                // Map new schema fields to old expected fields for backward compatibility
+                name: product.title || product.name,
+                price: product.variants?.[0]?.price || product.price || 0,
+                originalPrice:
+                  product.variants?.[0]?.originalPrice ||
+                  product.originalPrice ||
+                  0,
+                images: product.variants?.[0]?.images || product.images || [],
+              };
+
+              console.log("WishlistContext - Transformed product:", {
+                productId: product._id,
+                title: product.title,
+                name: transformedProduct.name,
+                price: transformedProduct.price,
+                variants: product.variants?.length || 0,
               });
-              return item.productId;
+              return transformedProduct;
             } else {
               // Product not populated, this shouldn't happen with proper populate
               console.warn(
@@ -135,7 +151,6 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
           );
           setWishlist(validWishlistItems);
         } else {
-          console.log("WishlistContext - No items in wishlist");
           setWishlist([]);
         }
       } else {
@@ -144,23 +159,58 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
           response.status,
           response.statusText
         );
-        const errorData = await response.json();
-        console.error("WishlistContext - Error details:", errorData);
+
+        try {
+          const errorData = await response.json();
+          console.error("WishlistContext - Error details:", errorData);
+
+          // Handle specific error cases
+          if (response.status === 401) {
+            console.warn(
+              "WishlistContext - Unauthorized, user may not be logged in"
+            );
+          } else if (response.status === 404) {
+            console.warn(
+              "WishlistContext - User not found, keeping existing wishlist"
+            );
+          } else {
+            console.warn(
+              "WishlistContext - Server error, keeping existing wishlist"
+            );
+          }
+        } catch (parseError) {
+          console.error(
+            "WishlistContext - Could not parse error response:",
+            parseError
+          );
+        }
       }
     } catch (error) {
       console.error("WishlistContext - Error loading wishlist:", error);
+
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        console.warn(
+          "WishlistContext - Network error, keeping existing wishlist"
+        );
+      } else {
+        console.warn(
+          "WishlistContext - Unknown error, keeping existing wishlist"
+        );
+      }
+
+      // Keep existing wishlist on any error
     }
   };
 
   const addToWishlist = async (item: Product | any) => {
-    console.log("WishlistContext - addToWishlist called:", {
+    console.log("WishlistContext - Adding to wishlist:", {
       isLoggedIn,
       item: item?.name || "Unknown",
       itemId: getStableId(item),
     });
 
     if (!isLoggedIn) {
-      console.log("WishlistContext - User not logged in, redirecting to login");
       // Redirect to login if not logged in
       if (typeof window !== "undefined") {
         window.location.href = "/account/login";
@@ -172,7 +222,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       const token = safeLocalStorage.getItem("token");
       const productId = getStableId(item);
 
-      console.log("WishlistContext - Adding to database wishlist:", {
+      console.log("WishlistContext - Add request details:", {
         productId,
         token: token ? "Present" : "Missing",
       });
@@ -217,7 +267,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     try {
       const token = safeLocalStorage.getItem("token");
 
-      console.log("WishlistContext - Removing from database wishlist:", {
+      console.log("WishlistContext - Remove request details:", {
         productId: id,
         token: token ? "Present" : "Missing",
       });

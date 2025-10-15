@@ -84,9 +84,6 @@ function SearchPageContent() {
 
   // FILTER LOGIC
   const filteredProducts = useMemo(() => {
-    console.log("Search Query:", query);
-    console.log("Total Products:", products.length);
-
     const filtered = products.filter((product: unknown) => {
       const productData = product as {
         name?: string;
@@ -127,7 +124,7 @@ function SearchPageContent() {
           inDesc;
 
         if (matches) {
-          console.log("Product matches:", productData.name, {
+          console.log({
             inName,
             inBrand,
             inCategory,
@@ -188,7 +185,6 @@ function SearchPageContent() {
       return true;
     });
 
-    console.log("Filtered Products Count:", filtered.length);
     return filtered;
   }, [
     products,
@@ -230,7 +226,9 @@ function SearchPageContent() {
 
     const handleWishlistClick = (e: React.MouseEvent) => {
       e.stopPropagation();
-      isWishlisteed ? removeFromWishlist(stableId) : addToWishlist(product);
+      isWishlisteed
+        ? removeFromWishlist(stableId || "")
+        : addToWishlist(product);
     };
 
     return (
@@ -238,11 +236,11 @@ function SearchPageContent() {
         className="bg-white shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer lg:w-53 w-40 max-w-sm mx-auto my-2.5"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => handleProductClick(stableId)}
+        onClick={() => handleProductClick(stableId || "")}
       >
         <div className="relative h-60 lg:h-80 overflow-hidden">
           <img
-            src={isHovered ? product.images[1] : product.images[0]}
+            src={isHovered ? product.images?.[1] : product.images?.[0]}
             alt={product.name}
             className="w-full h-full object-cover transition-opacity duration-500"
           />

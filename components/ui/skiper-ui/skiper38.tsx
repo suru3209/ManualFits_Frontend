@@ -551,12 +551,7 @@ const UserProfileIcon = ({
   userProfile: { image: string } | null;
   className?: string;
 }) => {
-  // console.log("UserProfileIcon - isLoggedIn:", isLoggedIn);
-  // console.log("UserProfileIcon - userProfile:", userProfile);
-  // console.log("UserProfileIcon - userProfile?.image:", userProfile?.image);
-
   if (isLoggedIn && userProfile?.image && userProfile.image.trim() !== "") {
-    // console.log("UserProfileIcon - Showing profile image:", userProfile.image);
     return (
       <img
         src={userProfile.image}
@@ -565,7 +560,6 @@ const UserProfileIcon = ({
       />
     );
   }
-  // console.log("UserProfileIcon - Showing CircleUser icon");
   return <CircleUser className={`opacity-79 ${className}`} />;
 };
 
@@ -732,7 +726,7 @@ const MobileMenu = ({
   </div>
 );
 
-const AppleNavbar = () => {
+const AppleNavbar: React.FC = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -763,9 +757,6 @@ const AppleNavbar = () => {
     if (user) {
       try {
         const userData = JSON.parse(user);
-        // console.log("Navbar - User data from localStorage:", userData);
-        // console.log("Navbar - User image:", userData.image);
-        // console.log("Navbar - Full user object keys:", Object.keys(userData));
 
         // For testing: if no image, try to use a default avatar or check other possible image fields
         let imageUrl = userData.image || "";
@@ -792,7 +783,6 @@ const AppleNavbar = () => {
 
         // If no image, leave it empty (will show CircleUser icon)
 
-        // console.log("Navbar - Final image URL:", imageUrl);
         setUserProfile({ image: imageUrl });
       } catch (error) {
         console.error("Error parsing user data:", error);

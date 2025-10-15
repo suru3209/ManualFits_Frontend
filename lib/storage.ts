@@ -1,12 +1,13 @@
-// Safe localStorage utilities for SSR compatibility
-
+/**
+ * Safe localStorage wrapper that handles SSR and browser compatibility
+ */
 export const safeLocalStorage = {
   getItem: (key: string): string | null => {
     if (typeof window === "undefined") return null;
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      console.error("Error accessing localStorage:", error);
+      console.warn(`Error reading from localStorage:`, error);
       return null;
     }
   },
@@ -16,7 +17,7 @@ export const safeLocalStorage = {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      console.error("Error setting localStorage:", error);
+      console.warn(`Error writing to localStorage:`, error);
     }
   },
 
@@ -25,7 +26,16 @@ export const safeLocalStorage = {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error("Error removing from localStorage:", error);
+      console.warn(`Error removing from localStorage:`, error);
+    }
+  },
+
+  clear: (): void => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.clear();
+    } catch (error) {
+      console.warn(`Error clearing localStorage:`, error);
     }
   },
 };

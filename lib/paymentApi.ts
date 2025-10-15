@@ -1,329 +1,245 @@
-import { safeLocalStorage } from "./storage";
+/**
+ * Payment API utilities for handling card and UPI payments
+ */
+
 import { buildApiUrl } from "./api";
 
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  return safeLocalStorage.getItem("token");
-};
+// Mock payment APIs - replace with actual payment gateway integration
 
-// Gift Cards API
-export const giftCardApi = {
-  // Get all gift cards
-  getAll: async () => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/gift-cards`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch gift cards: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Add new gift card
-  add: async (giftCardData: {
-    code: string;
-    balance: string;
-    expiry_date: string;
-    is_active: boolean;
-  }) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/gift-cards`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(giftCardData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to add gift card: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Update gift card
-  update: async (
-    giftCardId: string,
-    giftCardData: {
-      code: string;
-      balance: string;
-      expiry_date: string;
-      is_active: boolean;
-    }
-  ) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(
-      `${buildApiUrl("/api/user")}/gift-cards/${giftCardId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(giftCardData),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to update gift card: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Delete gift card
-  delete: async (giftCardId: string) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(
-      `${buildApiUrl("/api/user")}/gift-cards/${giftCardId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete gift card: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-};
-
-// UPI API
-export const upiApi = {
-  // Get all UPI
-  getAll: async () => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/upi`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch UPI: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Add new UPI
-  add: async (upiData: {
-    upi_id: string;
-    name: string;
-    is_default: boolean;
-  }) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/upi`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(upiData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to add UPI: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Update UPI
-  update: async (
-    upiId: string,
-    upiData: {
-      upi_id: string;
-      name: string;
-      is_default: boolean;
-    }
-  ) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/upi/${upiId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(upiData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update UPI: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Delete UPI
-  delete: async (upiId: string) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/upi/${upiId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete UPI: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-};
-
-// Cards API
 export const cardApi = {
-  // Get all cards
-  getAll: async () => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/cards`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch cards: ${response.statusText}`);
-    }
-
-    return response.json();
-  },
-
-  // Add new card
-  add: async (cardData: {
-    card_type: string;
-    brand: string;
-    last4: string;
-    expiry_month: string;
-    expiry_year: string;
-    cardholder_name: string;
-    is_default: boolean;
+  /**
+   * Process card payment
+   */
+  processPayment: async (paymentData: {
+    amount: number;
+    currency: string;
+    cardNumber: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+    cardholderName: string;
   }) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/cards`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(cardData),
+    // Mock API call - replace with actual payment gateway
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          transactionId: `txn_${Date.now()}`,
+          message: "Payment processed successfully",
+        });
+      }, 2000);
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to add card: ${response.statusText}`);
-    }
-
-    return response.json();
   },
 
-  // Update card
-  update: async (
-    cardId: string,
-    cardData: {
-      card_type: string;
-      brand: string;
-      last4: string;
-      expiry_month: string;
-      expiry_year: string;
-      cardholder_name: string;
-      is_default: boolean;
-    }
-  ) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
+  /**
+   * Get all saved cards for user
+   */
+  getAll: async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
 
-    const response = await fetch(
-      `${buildApiUrl("/api/user")}/cards/${cardId}`,
-      {
-        method: "PUT",
+      const response = await fetch(buildApiUrl("/api/user/cards"), {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        cards: data.cards || [],
+      };
+    } catch (error) {
+      console.error("Error fetching cards:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch cards",
+        cards: [],
+      };
+    }
+  },
+
+  /**
+   * Add new card
+   */
+  add: async (cardData: any) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(buildApiUrl("/api/user/cards"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(cardData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`Failed to update card: ${response.statusText}`);
+      const data = await response.json();
+      return {
+        success: true,
+        message: data.message || "Card added successfully",
+        card: data.card,
+      };
+    } catch (error) {
+      console.error("Error adding card:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to add card",
+      };
     }
-
-    return response.json();
   },
 
-  // Delete card
-  delete: async (cardId: string) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
+  /**
+   * Validate card details
+   */
+  validateCard: (cardData: {
+    cardNumber: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+  }) => {
+    const { cardNumber, expiryMonth, expiryYear, cvv } = cardData;
 
-    const response = await fetch(
-      `${buildApiUrl("/api/user")}/cards/${cardId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    // Basic validation
+    const isValidCardNumber = /^\d{16}$/.test(cardNumber.replace(/\s/g, ""));
+    const isValidExpiry =
+      /^\d{2}$/.test(expiryMonth) && /^\d{4}$/.test(expiryYear);
+    const isValidCvv = /^\d{3,4}$/.test(cvv);
 
-    if (!response.ok) {
-      throw new Error(`Failed to delete card: ${response.statusText}`);
-    }
-
-    return response.json();
+    return isValidCardNumber && isValidExpiry && isValidCvv;
   },
 };
 
-// User Payments API (for fetching all payment data)
-export const userPaymentsApi = {
-  // Get user profile with payment data
-  getProfile: async () => {
-    const token = getAuthToken();
-    if (!token) throw new Error("No authentication token found");
-
-    const response = await fetch(`${buildApiUrl("/api/user")}/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+export const upiApi = {
+  /**
+   * Process UPI payment
+   */
+  processPayment: async (paymentData: {
+    amount: number;
+    upiId: string;
+    merchantId?: string;
+  }) => {
+    // Mock API call - replace with actual UPI gateway
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          transactionId: `upi_${Date.now()}`,
+          message: "UPI payment initiated successfully",
+        });
+      }, 1500);
     });
+  },
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user profile: ${response.statusText}`);
+  /**
+   * Get all saved UPI IDs for user
+   */
+  getAll: async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(buildApiUrl("/api/user/upi"), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        upi: data.upi || [],
+      };
+    } catch (error) {
+      console.error("Error fetching UPI:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch UPI",
+        upi: [],
+      };
     }
+  },
 
-    return response.json();
+  /**
+   * Add new UPI
+   */
+  add: async (upiData: any) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(buildApiUrl("/api/user/upi"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(upiData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        message: data.message || "UPI added successfully",
+        upi: data.upi,
+      };
+    } catch (error) {
+      console.error("Error adding UPI:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to add UPI",
+      };
+    }
+  },
+
+  /**
+   * Validate UPI ID
+   */
+  validateUpiId: (upiId: string) => {
+    // Basic UPI ID validation
+    const upiIdRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/;
+    return upiIdRegex.test(upiId);
+  },
+
+  /**
+   * Get supported UPI apps
+   */
+  getSupportedApps: () => {
+    return [
+      { name: "Google Pay", id: "gpay", icon: "📱" },
+      { name: "PhonePe", id: "phonepe", icon: "💳" },
+      { name: "Paytm", id: "paytm", icon: "🏦" },
+      { name: "BHIM", id: "bhim", icon: "🏛️" },
+      { name: "Amazon Pay", id: "amazonpay", icon: "📦" },
+    ];
   },
 };

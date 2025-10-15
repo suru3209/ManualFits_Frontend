@@ -166,3 +166,61 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Chat message overflow fixes */
+.chat-message {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  max-width: 100% !important;
+  white-space: pre-wrap !important;
+  overflow: hidden !important;
+}
+
+.chat-container {
+  width: 100% !important;
+}
+
+.chat-bubble {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  white-space: pre-wrap !important;
+}
+
+/* Mobile responsive chat bubbles */
+@media (max-width: 640px) {
+  .chat-bubble {
+    max-width: 75% !important;
+    min-width: 80px !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .chat-bubble {
+    max-width: 70% !important;
+    min-width: 100px !important;
+  }
+}
+
+/* Additional overflow prevention */
+.chat-window {
+  max-width: 100% !important;
+}
+
+.chat-message-container {
+  width: 100% !important;
+}
+
+/* Admin Support Chat Scrolling */
+.admin-chat-scroll {
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.admin-chat-container {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}

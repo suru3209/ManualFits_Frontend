@@ -1,80 +1,93 @@
-// Profile image utility functions
+/**
+ * Profile image management functions
+ */
 
-export interface ProfileImageUpdateResponse {
+import { buildApiUrl } from "./api";
+
+export interface ProfileImageUpdateResult {
   success: boolean;
-  message: string;
-  user?: {
-    _id: string;
-    username: string;
-    email: string;
-    phone: string;
-    image: string;
-    cloudinaryPublicId: string;
-    dob?: string;
-    gender?: string;
-    addresses: unknown[];
-    created_at: string;
-    updated_at: string;
-  };
-  error?: string;
+  message?: string;
+  user?: unknown;
 }
 
-// Update user profile image
+/**
+ * Update user's profile image
+ */
 export const updateProfileImage = async (
-  image: string,
-  cloudinaryPublicId: string,
+  imageUrl: string,
+  publicId: string,
   token: string
-): Promise<ProfileImageUpdateResponse> => {
+): Promise<ProfileImageUpdateResult> => {
   try {
-    const response = await fetch("/api/user/profile/image", {
+    const response = await fetch(buildApiUrl("/api/user/profile/image"), {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        image,
-        cloudinaryPublicId,
+        image: imageUrl,
+        cloudinaryPublicId: publicId,
       }),
     });
 
     const result = await response.json();
-    return result;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: result.message || "Failed to update profile image",
+      };
+    }
+
+    return {
+      success: true,
+      user: result.user,
+      message: result.message,
+    };
   } catch (error) {
-    console.error("Profile image update error:", error);
+    console.error("Error updating profile image:", error);
     return {
       success: false,
-      message: "Update failed",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: "Failed to update profile image. Please try again.",
     };
   }
 };
 
-// Remove profile image
+/**
+ * Remove user's profile image
+ */
 export const removeProfileImage = async (
   token: string
-): Promise<ProfileImageUpdateResponse> => {
+): Promise<ProfileImageUpdateResult> => {
   try {
-    const response = await fetch("/api/user/profile/image", {
-      method: "PUT",
+    const response = await fetch(buildApiUrl("/api/user/profile/image"), {
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        image: "",
-        cloudinaryPublicId: "",
-      }),
     });
 
     const result = await response.json();
-    return result;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: result.message || "Failed to remove profile image",
+      };
+    }
+
+    return {
+      success: true,
+      user: result.user,
+      message: result.message,
+    };
   } catch (error) {
-    console.error("Profile image removal error:", error);
+    console.error("Error removing profile image:", error);
     return {
       success: false,
-      message: "Removal failed",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: "Failed to remove profile image. Please try again.",
     };
   }
 };

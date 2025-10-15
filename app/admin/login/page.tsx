@@ -12,158 +12,129 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Lock, User } from "lucide-react";
-import { adminApi } from "@/lib/adminApi";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { buildApiUrl } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
+    rememberMe: false,
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
-    // Basic client-side validation
-    if (!formData.username.trim()) {
-      setError("Please enter your username.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!formData.password.trim()) {
-      setError("Please enter your password.");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const data = await adminApi.login(formData.username, formData.password);
+      const response = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
 
-      // Store admin token and info
-      localStorage.setItem("adminToken", data.token);
-      localStorage.setItem("adminInfo", JSON.stringify(data.admin));
+      const data = await response.json();
 
-      // Redirect to admin dashboard
-      router.push("/admin");
-    } catch (error: unknown) {
-      console.error("Admin login error:", error);
-
-      // Handle specific error cases based on status codes
-      const errorObj = error as { status?: number; message?: string };
-      if (errorObj.status === 401) {
-        setError(
-          "Invalid username or password. Please check your credentials."
-        );
-      } else if (errorObj.status === 404) {
-        setError(
-          "Admin account not found. Please contact system administrator."
-        );
-      } else if (errorObj.status === 403) {
-        setError("Access denied. Your account may not have admin privileges.");
-      } else if (errorObj.status === 500) {
-        setError("Server error. Please try again later.");
-      } else if (errorObj.message?.includes("Network")) {
-        setError("Network error. Please check your connection and try again.");
-      } else if (
-        errorObj.message?.includes("Invalid") ||
-        errorObj.message?.includes("invalid")
-      ) {
-        setError(
-          "Invalid credentials. Please check your username and password."
-        );
-      } else {
-        setError(
-          errorObj.message ||
-            "Login failed. Please check your credentials and try again."
-        );
+      if (!response.ok) {
+        toast.error(data.message || "Login failed");
+        return;
       }
+
+      // Store tokens
+      localStorage.setItem("adminToken", data.token);
+      if (formData.rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+      }
+
+      toast.success("Login successful!");
+      router.push("/admin/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-
-    // Clear error when user starts typing
-    if (error) {
-      setError("");
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <Lock className="w-8 h-8 text-white" />
+        {/* Back to site link */}
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to site
+          </Link>
+        </div>
+
+        <Card className="shadow-lg border-0">
+          <CardHeader className="space-y-1 text-center">
+            <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
+              <span className="text-white font-bold text-xl">M</span>
             </div>
-            <CardTitle className="text-2xl font-bold text-white">
-              Admin Login
-            </CardTitle>
-            <CardDescription className="text-gray-300">
-              Enter your credentials to access the admin panel
+            <CardTitle className="text-2xl font-bold">Admin Panel</CardTitle>
+            <CardDescription>
+              Sign in to access the admin dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <Alert className="bg-red-500/10 border-red-500/20 text-red-200">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-white">
-                  Username
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={formData.username}
-                    onChange={handleChange}
-                    placeholder="Enter your username"
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400"
-                    required
-                  />
-                </div>
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                  className="h-11"
+                />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">
-                  Password
-                </Label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleChange}
                     placeholder="Enter your password"
-                    className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     required
+                    disabled={isLoading}
+                    className="h-11 pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -174,16 +145,34 @@ export default function AdminLoginPage() {
                 </div>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="rememberMe"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, rememberMe: !!checked }))
+                  }
+                  disabled={isLoading}
+                />
+                <Label
+                  htmlFor="rememberMe"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Remember me
+                </Label>
+              </div>
+
               <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full h-11"
+                disabled={isLoading || !formData.username || !formData.password}
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Signing In...
-                  </div>
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
                 ) : (
                   "Sign In"
                 )}
@@ -191,10 +180,22 @@ export default function AdminLoginPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-gray-400 text-sm">Secure admin access only</p>
+              <button
+                type="button"
+                onClick={() => {
+                  toast.info("Forgot password feature coming soon");
+                }}
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                Forgot your password?
+              </button>
             </div>
           </CardContent>
         </Card>
+
+        <div className="mt-6 text-center text-xs text-slate-500">
+          Manual Fits Admin Panel v1.0
+        </div>
       </div>
     </div>
   );

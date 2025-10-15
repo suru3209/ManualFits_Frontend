@@ -6,6 +6,7 @@ import { WishlistProvider } from "../context/WishlistContext";
 import { ToastProvider } from "../context/ToastContext";
 import { LoadingProvider } from "../context/LoadingContext";
 import { ConditionalLayout } from "../components/layout/ConditionalLayout";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,15 +66,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <CartProvider>
-          <WishlistProvider>
-            <ToastProvider>
-              <LoadingProvider>
-                <ConditionalLayout>{children}</ConditionalLayout>
-              </LoadingProvider>
-            </ToastProvider>
-          </WishlistProvider>
-        </CartProvider>
+        <TooltipProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <ToastProvider>
+                <LoadingProvider>
+                  <ConditionalLayout>{children}</ConditionalLayout>
+                </LoadingProvider>
+              </ToastProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

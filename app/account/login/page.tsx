@@ -216,7 +216,6 @@ export default function AuthPage() {
       if (res.ok) {
         setOtpSent(true);
         setOtpError("");
-        console.log("OTP sent successfully");
       } else {
         // Check if email already exists
         if (data.message && data.message.includes("already registered")) {
@@ -266,7 +265,6 @@ export default function AuthPage() {
       if (res.ok) {
         setOtpVerified(true);
         setOtpError("");
-        console.log("OTP verified successfully");
       } else {
         setOtpError(data.message || "Invalid OTP");
       }
@@ -377,7 +375,6 @@ export default function AuthPage() {
           return;
         }
 
-        console.log("Login Success:", data);
 
         // Handle remember me functionality
         if (rememberMe) {
@@ -392,7 +389,6 @@ export default function AuthPage() {
         safeLocalStorage.setItem("user", JSON.stringify(data.user));
         if (data.token) {
           safeLocalStorage.setItem("token", data.token);
-          console.log("Token saved:", data.token);
         }
 
         // Redirect to home page
@@ -427,13 +423,11 @@ export default function AuthPage() {
             return;
           }
 
-          console.log("Signup Success:", data);
 
           // Save user data and token in localStorage
           safeLocalStorage.setItem("user", JSON.stringify(data.user));
           if (data.token) {
             safeLocalStorage.setItem("token", data.token);
-            console.log("Token saved:", data.token);
           }
 
           // Redirect to home page

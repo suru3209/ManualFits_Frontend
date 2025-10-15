@@ -61,7 +61,12 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
         token
       );
 
-      if (result.success && result.data) {
+      if (
+        result.success &&
+        result.data &&
+        result.data.url &&
+        result.data.public_id
+      ) {
         setCurrentImage(result.data.url);
         onUpload(result.data.url, result.data.public_id);
 

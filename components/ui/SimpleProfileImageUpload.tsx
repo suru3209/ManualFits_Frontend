@@ -29,11 +29,9 @@ export const SimpleProfileImageUpload: React.FC<
   };
 
   const handleFileSelect = async (files: FileList | null) => {
-    console.log("File selected:", files);
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    console.log("Selected file:", file.name, file.size, file.type);
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
@@ -58,7 +56,7 @@ export const SimpleProfileImageUpload: React.FC<
 
       if (result.success && result.data) {
         setCurrentImage(result.data.url);
-        onUpload(result.data.url, result.data.public_id);
+        onUpload(result.data.url || "", result.data.public_id || "");
       } else {
         setUploadError(result.message || "Upload failed");
       }
@@ -75,7 +73,6 @@ export const SimpleProfileImageUpload: React.FC<
   };
 
   const openFileDialog = () => {
-    console.log("Opening file dialog");
     fileInputRef.current?.click();
   };
 

@@ -1,64 +1,113 @@
-// API configuration utility
-export const getApiBaseUrl = (): string => {
-  // Check if we're in development or production
-  if (typeof window !== "undefined") {
-    // Client-side: use environment variable or fallback
-    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (envUrl) return envUrl;
+/**
+ * API utility functions for building URLs and managing API endpoints
+ */
 
-    // Development fallback
-    if (process.env.NODE_ENV === "development") {
-      return "http://localhost:8080";
-    }
-
-    return "api.manualfits.com";
+// Base API URL - adjust based on environment
+const getBaseUrl = (): string => {
+  if (typeof window === "undefined") {
+    // Server-side
+    return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
   }
-
-  // Server-side: use environment variable or fallback
-  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (envUrl) return envUrl;
-
-  // Development fallback
-  if (process.env.NODE_ENV === "development") {
-    return "http://localhost:8080";
-  }
-
-  return "api.manualfits.com";
+  // Client-side
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 };
 
-// API endpoints
+/**
+ * Builds a complete API URL
+ */
+export const buildApiUrl = (endpoint: string): string => {
+  if (!endpoint) {
+    throw new Error("Endpoint cannot be undefined or empty");
+  }
+  const baseUrl = getBaseUrl();
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${cleanEndpoint}`;
+};
+
+/**
+ * API endpoints constants
+ */
 export const API_ENDPOINTS = {
-  // Auth endpoints
+  // Auth base path
   AUTH_BASE: "/api/auth",
+
+  // Auth endpoints
   LOGIN: "/api/auth/login",
   REGISTER: "/api/auth/register",
-  PROFILE: "/api/user/profile",
+  LOGOUT: "/api/auth/logout",
+  REFRESH: "/api/auth/refresh",
 
   // User endpoints
+  PROFILE: "/api/user/profile",
   USER_ORDERS: "/api/user/orders",
-  USER_WISHLIST: "/api/user/wishlist",
   USER_CART: "/api/user/cart",
+  USER_WISHLIST: "/api/user/wishlist",
   USER_ADDRESS: "/api/user/address",
-
-  // Order endpoints
+  USER_PAYMENT: "/api/user/payment",
+  USER_SUPPORT: "/api/user/support",
   ORDER_CANCEL: (orderId: string) => `/api/user/orders/${orderId}/cancel`,
-  ORDER_RETURN_REPLACE: (orderId: string) =>
-    `/api/user/orders/${orderId}/return-replace`,
+
+  // Product endpoints
+  PRODUCTS: "/products",
+  PRODUCT_BY_ID: "/products",
+
+  // Review endpoints
+  REVIEWS: "/api/reviews",
+  USER_REVIEWS: "/api/reviews/user",
 
   // Upload endpoints
   UPLOAD_SINGLE: "/api/upload/single",
   UPLOAD_MULTIPLE: "/api/upload/multiple",
-  DELETE_UPLOAD: (publicId: string) => `/api/upload/${publicId}`,
 
-  // Review endpoints
-  REVIEWS_BASE: "/api/reviews",
-  PRODUCT_REVIEWS: (productId: string) => `/api/reviews/product/${productId}`,
-  USER_REVIEWS: "/api/reviews/user",
-  REVIEW_CRUD: (reviewId: string) => `/api/reviews/${reviewId}`,
+  // Admin endpoints
+  ADMIN: "/api/admin",
+
+  // Chat endpoints
+  CHAT: "/api/chat",
+
+  // Support endpoints
+  SUPPORT_TICKETS: "/api/support/tickets",
+  SUPPORT_STATS: "/api/support/stats",
+  SUPPORT_BASE: "/api/support",
+  SUPPORT_CLOSE: (ticketId: string) => `/api/support/tickets/${ticketId}`,
 } as const;
 
-// Helper function to build full API URLs
-export const buildApiUrl = (endpoint: string): string => {
-  const baseUrl = getApiBaseUrl();
-  return `${baseUrl}${endpoint}`;
+/**
+ * Default fetch options for API calls
+ */
+export const defaultFetchOptions = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include" as RequestCredentials,
+};
+
+/**
+ * Enhanced fetch wrapper with error handling
+ */
+export const apiFetch = async (
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> => {
+  const mergedOptions: RequestInit = {
+    ...defaultFetchOptions,
+    ...options,
+    headers: {
+      ...defaultFetchOptions.headers,
+      ...options.headers,
+    },
+  };
+
+  try {
+    const response = await fetch(url, mergedOptions);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error("API fetch error:", error);
+    throw error;
+  }
 };
