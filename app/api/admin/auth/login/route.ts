@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
 
     // Call the backend admin login API
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
     const response = await fetch(`${backendUrl}/api/admin/login`, {
       method: "POST",
       headers: {

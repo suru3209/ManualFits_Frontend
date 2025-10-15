@@ -119,7 +119,7 @@ export default function ReviewsPage() {
       setIsLoading(true);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const params = new URLSearchParams({
         page: page.toString(),
@@ -159,7 +159,7 @@ export default function ReviewsPage() {
       setIsUpdatingStatus(reviewId);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(
         `${backendUrl}/api/admin/reviews/${reviewId}`,
@@ -195,7 +195,7 @@ export default function ReviewsPage() {
       setIsDeleting(reviewId);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(
         `${backendUrl}/api/admin/reviews/${reviewId}`,

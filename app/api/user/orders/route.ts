@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get("authorization");
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
 
     console.log(
       "Fetching user orders from backend:",
@@ -45,7 +48,10 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("authorization");
     const body = await request.json();
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
 
     const response = await fetch(`${baseUrl}/api/user/orders`, {
       method: "POST",

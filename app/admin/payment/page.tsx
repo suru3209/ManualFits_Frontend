@@ -59,7 +59,7 @@ export default function PaymentSettingsPage() {
       setIsLoading(true);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(`${backendUrl}/api/admin/payment-settings`, {
         headers: {
@@ -89,7 +89,7 @@ export default function PaymentSettingsPage() {
 
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(`${backendUrl}/api/admin/upload`, {
         method: "POST",
@@ -147,7 +147,7 @@ export default function PaymentSettingsPage() {
       // Save to database immediately
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(`${backendUrl}/api/admin/payment-settings`, {
         method: "PUT",
@@ -212,7 +212,7 @@ export default function PaymentSettingsPage() {
         // Save to database immediately
         const token = localStorage.getItem("adminToken");
         const backendUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+          process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
         const response = await fetch(
           `${backendUrl}/api/admin/payment-settings`,
@@ -258,7 +258,7 @@ export default function PaymentSettingsPage() {
       setIsSaving(true);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(`${backendUrl}/api/admin/payment-settings`, {
         method: "PUT",

@@ -428,7 +428,7 @@ export default function ProductForm({
 
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       if (!token) {
         toast.error("Admin token not found. Please login again.");

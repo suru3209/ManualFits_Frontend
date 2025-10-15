@@ -191,7 +191,7 @@ export default function AdminManagementPage() {
       setIsLoading(true);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(`${backendUrl}/api/admin/admins`, {
         headers: {
@@ -223,7 +223,7 @@ export default function AdminManagementPage() {
 
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const url = editingAdmin
         ? `${backendUrl}/api/admin/admins/${editingAdmin._id}`
@@ -269,7 +269,7 @@ export default function AdminManagementPage() {
       setIsDeleting(adminId);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(
         `${backendUrl}/api/admin/admins/${adminId}`,

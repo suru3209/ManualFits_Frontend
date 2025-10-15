@@ -113,7 +113,7 @@ export default function CouponsPage() {
       setIsLoading(true);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const params = new URLSearchParams({
         page: page.toString(),
@@ -151,7 +151,7 @@ export default function CouponsPage() {
     try {
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(
         `${backendUrl}/api/admin/coupons/${couponId}`,
@@ -184,7 +184,7 @@ export default function CouponsPage() {
     try {
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(
         `${backendUrl}/api/admin/coupons/${couponId}`,

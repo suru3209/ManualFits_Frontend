@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
       const response = await fetch(`${backendUrl}/api/admin/dashboard/stats`, {
         headers: {
