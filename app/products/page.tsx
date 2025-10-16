@@ -32,12 +32,7 @@ import {
 // Fetching products from backend API with retry logic
 async function fetchProducts(retryCount = 0): Promise<Product[]> {
   const apiUrl = buildApiUrl("/products");
-  console.log("🔍 API URL being used:", apiUrl);
-  console.log("🔍 Environment:", process.env.NODE_ENV);
-  console.log(
-    "🔍 NEXT_PUBLIC_API_BASE_URL:",
-    process.env.NEXT_PUBLIC_API_BASE_URL
-  );
+  console.log("🔍 API URL:", apiUrl);
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -58,11 +53,10 @@ async function fetchProducts(retryCount = 0): Promise<Product[]> {
       );
     }
     const json = await res.json();
-    console.log("🔍 API Response:", json);
 
     // Handle API response format - check for data field or direct array
     const products = json.data || (Array.isArray(json) ? json : []);
-    console.log("🔍 Extracted products:", products.length, "products");
+    console.log(`🔍 Found ${products.length} products`);
 
     // Transform products to include legacy fields for backward compatibility
     return products.map((product: Product) => ({
@@ -172,24 +166,29 @@ function ProductsPageContent() {
       try {
         console.log("🔄 Loading products...");
 
-        // Test direct API call first
-        const testUrl = "https://manualfits-backend.onrender.com/products";
-        console.log("🧪 Testing direct API call to:", testUrl);
+        // Debug production environment
+        console.log("🔍 Production Debug Info:");
+        console.log("- Environment:", process.env.NODE_ENV);
+        console.log("- API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+        console.log(
+          "- Current Host:",
+          typeof window !== "undefined" ? window.location.hostname : "server"
+        );
 
-        const testResponse = await fetch(testUrl);
-        console.log("🧪 Test response status:", testResponse.status);
-        const testData = await testResponse.json();
-        console.log("🧪 Test response data:", testData);
+        // Test both regular and admin API
+        console.log("🧪 Testing regular API...");
+        const regularResponse = await fetch(
+          "https://manualfits-backend.onrender.com/products"
+        );
+        const regularData = await regularResponse.json();
+        console.log("🧪 Regular API response:", regularData);
 
-        // Test admin API call to see all products
-        const adminUrl =
-          "https://manualfits-backend.onrender.com/products?admin=true";
-        console.log("🧪 Testing admin API call to:", adminUrl);
-
-        const adminResponse = await fetch(adminUrl);
-        console.log("🧪 Admin response status:", adminResponse.status);
+        console.log("🧪 Testing admin API...");
+        const adminResponse = await fetch(
+          "https://manualfits-backend.onrender.com/products?admin=true"
+        );
         const adminData = await adminResponse.json();
-        console.log("🧪 Admin response data:", adminData);
+        console.log("🧪 Admin API response:", adminData);
 
         const data = await fetchProducts();
         console.log(`✅ Loaded ${data.length} products`);

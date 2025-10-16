@@ -70,7 +70,20 @@ export default function PaymentSettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("🔍 Payment settings API response:", data);
+        console.log(
+          "🔍 QR Codes received:",
+          data.paymentSettings?.qrCodes?.length || 0
+        );
         setPaymentSettings(data.paymentSettings || { qrCodes: [] });
+      } else {
+        console.error(
+          "❌ Payment settings API error:",
+          response.status,
+          response.statusText
+        );
+        const errorData = await response.json();
+        console.error("❌ Error details:", errorData);
       }
     } catch (error) {
       console.error("Failed to fetch payment settings:", error);
