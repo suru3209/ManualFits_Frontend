@@ -103,73 +103,112 @@ export default function SupportChatWidget() {
     category: "general",
     priority: "medium",
   });
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [socketError, setSocketError] = useState<string | null>(null);
+  const [messageCounter, setMessageCounter] = useState(0);
+  const [lastSentMessage, setLastSentMessage] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Use requestAnimationFrame for better performance
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
   };
 
   // Initialize socket connection
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      socketService.connect(token);
+      // Debug token before connecting
+      console.log("🔍 Debugging token before socket connection:");
+      socketService.debugToken();
+
+      socketService.connect(token).catch((error) => {
+        console.error("❌ Socket connection failed:", error);
+        setSocketError(error.message);
+
+        // If authentication fails, clear invalid token
+        if (
+          error.message.includes("Authentication failed") ||
+          error.message.includes("Token has expired") ||
+          error.message.includes("Invalid token")
+        ) {
+          socketService.clearInvalidToken();
+          setSocketError("Please log in again to use the chat");
+          console.log("🔄 Please log in again to continue using the chat");
+        }
+      });
+    } else {
+      console.log("❌ No token found, user needs to log in");
     }
   }, []);
 
-  // Socket event listeners
+  // Handle user's own messages immediately for better UX
   useEffect(() => {
     if (!socketService.isSocketConnected()) return;
 
+    console.log("🔧 SupportChatWidget setting up user message handler");
+
     const handleNewMessage = (data: { ticketId: string; message: unknown }) => {
       if (data.ticketId === currentTicket?._id) {
-        setMessages((prev) => [...prev, data.message as Message]);
-        scrollToBottom();
-      }
-    };
+        const newMessage = data.message as Message;
 
-    const handleAdminTyping = (data: { userType: string }) => {
-      setIsTyping(data.userType === "admin");
-    };
+        // Only handle user's own messages here
+        if (newMessage.sender === "user") {
+          console.log(
+            "📨 SupportChatWidget received user message:",
+            newMessage.message
+          );
 
-    const handleAdminStoppedTyping = (_data: unknown) => {
-      setIsTyping(false);
-    };
+          setMessages((prev) => {
+            const exists = prev.some((msg) => msg._id === newMessage._id);
+            if (!exists) {
+              console.log("✅ Adding user message to chat");
+              setMessageCounter((prev) => prev + 1);
+              return [...prev, newMessage];
+            }
+            return prev;
+          });
 
-    const handleTicketStatusUpdate = (data: {
-      ticketId: string;
-      status: string;
-    }) => {
-      if (data.ticketId === currentTicket?._id) {
-        setCurrentTicket((prev) =>
-          prev ? { ...prev, status: data.status as Ticket["status"] } : null
-        );
-
-        if (data.status === "closed" && !currentTicket?.feedback) {
-          setShowFeedback(true);
+          scrollToBottom();
         }
       }
     };
 
     socketService.onNewSupportMessage(handleNewMessage);
-    socketService.onSupportUserTyping(handleAdminTyping);
-    socketService.onSupportUserStoppedTyping(handleAdminStoppedTyping);
-    socketService.onSupportTicketStatusUpdated(handleTicketStatusUpdate);
 
     return () => {
       socketService.offNewSupportMessage();
-      socketService.offSupportUserTyping();
-      socketService.offSupportUserStoppedTyping();
-      socketService.offSupportTicketStatusUpdated();
     };
-  }, [currentTicket]);
+  }, [currentTicket?._id]);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Join socket room when ticket changes
+  useEffect(() => {
+    if (currentTicket && socketService.isSocketConnected()) {
+      console.log(
+        "🔧 Joining socket room for existing ticket:",
+        currentTicket._id
+      );
+      socketService.joinSupportTicket(currentTicket._id);
+    }
+  }, [currentTicket?._id]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Create new ticket
   const createTicket = async () => {
@@ -189,7 +228,11 @@ export default function SupportChatWidget() {
         setIsCreatingTicket(false);
         setIsExpanded(true);
 
+        // Reset counter for new ticket
+        setMessageCounter(0);
+
         // Join socket room
+        console.log("🔧 Joining socket room for ticket:", data.data.ticket._id);
         socketService.joinSupportTicket(data.data.ticket._id);
       }
     } catch (error) {
@@ -197,20 +240,29 @@ export default function SupportChatWidget() {
     }
   };
 
-  // Send message
+  // Send message - NO optimistic update, let socket handle it
   const sendMessage = async () => {
-    if (!newMessage.trim() || !currentTicket) return;
+    if (!newMessage.trim() || !currentTicket || isSendingMessage) return;
+
+    const messageToSend = newMessage.trim();
+
+    // Clear input immediately and track sent message
+    setNewMessage("");
+    setLastSentMessage(messageToSend);
+    setIsSendingMessage(true);
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `/api/support/tickets/${currentTicket._id}/messages`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            message: newMessage,
+            message: messageToSend,
             sender: "user",
             messageType: "text",
           }),
@@ -218,10 +270,31 @@ export default function SupportChatWidget() {
       );
 
       if (response.ok) {
-        setNewMessage("");
+        console.log(
+          "✅ Message sent successfully - waiting for socket response"
+        );
+        // Let socket handle the message display for real-time updates
+        setLastSentMessage(""); // Clear the flag after successful send
+      } else {
+        // Get error details
+        const errorData = await response.json().catch(() => ({}));
+        console.error("❌ Failed to send message:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+
+        // Restore message on error
+        setNewMessage(messageToSend);
+        setLastSentMessage(""); // Clear the flag
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      // Restore message on error
+      setNewMessage(messageToSend);
+      setLastSentMessage(""); // Clear the flag
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -317,15 +390,34 @@ export default function SupportChatWidget() {
 
               {!currentTicket && !isCreatingTicket ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-600">
-                    Need help? Start a conversation with our support team.
-                  </p>
-                  <Button
-                    onClick={() => setIsCreatingTicket(true)}
-                    className="w-full"
-                  >
-                    Start New Chat
-                  </Button>
+                  {socketError ? (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-sm text-red-600">{socketError}</p>
+                      <Button
+                        onClick={() => {
+                          setSocketError(null);
+                          window.location.reload();
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                      >
+                        Retry Connection
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-slate-600">
+                        Need help? Start a conversation with our support team.
+                      </p>
+                      <Button
+                        onClick={() => setIsCreatingTicket(true)}
+                        className="w-full"
+                      >
+                        Start New Chat
+                      </Button>
+                    </>
+                  )}
                 </div>
               ) : isCreatingTicket ? (
                 <div className="space-y-4">
@@ -457,61 +549,86 @@ export default function SupportChatWidget() {
                         {currentTicket?.subject}
                       </span>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={getPriorityColor(
-                        currentTicket?.priority || "medium"
-                      )}
-                    >
-                      {currentTicket?.priority}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge
+                        variant="outline"
+                        className={getPriorityColor(
+                          currentTicket?.priority || "medium"
+                        )}
+                      >
+                        {currentTicket?.priority}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        Messages: {messages.length}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Debug: {messages.map((m) => m._id.slice(-4)).join(", ")}
+                      </Badge>
+                      <Badge variant="destructive" className="text-xs">
+                        Counter: {messageCounter}
+                      </Badge>
+                    </div>
                   </div>
 
                   <ScrollArea className="h-64 border rounded-lg p-3">
                     <div className="space-y-3">
-                      {messages.map((message) => (
-                        <div
-                          key={message._id}
-                          className={cn(
-                            "flex",
-                            message.sender === "admin"
-                              ? "justify-start"
-                              : "justify-end"
-                          )}
-                        >
+                      {messages.map((message, index) => {
+                        const renderId = `${
+                          message._id
+                        }-${index}-${Date.now()}`;
+                        console.log(
+                          `🎨 RENDERING MESSAGE ${index} [${renderId}]:`,
+                          {
+                            id: message._id,
+                            content: message.message,
+                            sender: message.sender,
+                          }
+                        );
+
+                        return (
                           <div
+                            key={`${message._id}-${index}`}
                             className={cn(
-                              "max-w-xs px-3 py-2 rounded-lg text-sm",
+                              "flex",
                               message.sender === "admin"
-                                ? "bg-slate-100 text-slate-900"
-                                : "bg-primary text-white"
+                                ? "justify-start"
+                                : "justify-end"
                             )}
                           >
-                            {message.messageType === "auto-reply" && (
-                              <div className="flex items-center space-x-1 mb-1">
-                                <Smile className="w-3 h-3" />
-                                <span className="text-xs opacity-75">
-                                  Auto-reply
-                                </span>
-                              </div>
-                            )}
-                            <p>{message.message}</p>
-                            <p
+                            <div
                               className={cn(
-                                "text-xs mt-1",
+                                "max-w-xs px-3 py-2 rounded-lg text-sm",
                                 message.sender === "admin"
-                                  ? "text-slate-500"
-                                  : "text-primary-foreground/70"
+                                  ? "bg-slate-100 text-slate-900"
+                                  : "bg-primary text-white"
                               )}
                             >
-                              {formatDistanceToNow(
-                                new Date(message.timestamp),
-                                { addSuffix: true }
+                              {message.messageType === "auto-reply" && (
+                                <div className="flex items-center space-x-1 mb-1">
+                                  <Smile className="w-3 h-3" />
+                                  <span className="text-xs opacity-75">
+                                    Auto-reply
+                                  </span>
+                                </div>
                               )}
-                            </p>
+                              <p>{message.message}</p>
+                              <p
+                                className={cn(
+                                  "text-xs mt-1",
+                                  message.sender === "admin"
+                                    ? "text-slate-500"
+                                    : "text-primary-foreground/70"
+                                )}
+                              >
+                                {formatDistanceToNow(
+                                  new Date(message.timestamp),
+                                  { addSuffix: true }
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {isTyping && (
                         <div className="flex justify-start">
                           <div className="bg-slate-100 px-3 py-2 rounded-lg">
@@ -525,6 +642,18 @@ export default function SupportChatWidget() {
                                 className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
                                 style={{ animationDelay: "0.2s" }}
                               />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {isSendingMessage && (
+                        <div className="flex justify-end">
+                          <div className="bg-primary/20 px-3 py-2 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                              <span className="text-xs text-primary">
+                                Sending...
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -544,7 +673,10 @@ export default function SupportChatWidget() {
                       onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                       className="flex-1"
                     />
-                    <Button onClick={sendMessage} disabled={!newMessage.trim()}>
+                    <Button
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim() || isSendingMessage}
+                    >
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
@@ -595,48 +727,56 @@ export default function SupportChatWidget() {
             <CardContent className="p-0">
               <ScrollArea className="h-80 p-4">
                 <div className="space-y-3">
-                  {messages.map((message) => (
-                    <div
-                      key={message._id}
-                      className={cn(
-                        "flex",
-                        message.sender === "admin"
-                          ? "justify-start"
-                          : "justify-end"
-                      )}
-                    >
+                  {messages.map((message, index) => {
+                    console.log(`🎨 RENDERING EXPANDED MESSAGE ${index}:`, {
+                      id: message._id,
+                      content: message.message,
+                      sender: message.sender,
+                    });
+
+                    return (
                       <div
+                        key={`${message._id}-${index}`}
                         className={cn(
-                          "max-w-xs px-3 py-2 rounded-lg text-sm",
+                          "flex",
                           message.sender === "admin"
-                            ? "bg-slate-100 text-slate-900"
-                            : "bg-primary text-white"
+                            ? "justify-start"
+                            : "justify-end"
                         )}
                       >
-                        {message.messageType === "auto-reply" && (
-                          <div className="flex items-center space-x-1 mb-1">
-                            <Smile className="w-3 h-3" />
-                            <span className="text-xs opacity-75">
-                              Auto-reply
-                            </span>
-                          </div>
-                        )}
-                        <p>{message.message}</p>
-                        <p
+                        <div
                           className={cn(
-                            "text-xs mt-1",
+                            "max-w-xs px-3 py-2 rounded-lg text-sm",
                             message.sender === "admin"
-                              ? "text-slate-500"
-                              : "text-primary-foreground/70"
+                              ? "bg-slate-100 text-slate-900"
+                              : "bg-primary text-white"
                           )}
                         >
-                          {formatDistanceToNow(new Date(message.timestamp), {
-                            addSuffix: true,
-                          })}
-                        </p>
+                          {message.messageType === "auto-reply" && (
+                            <div className="flex items-center space-x-1 mb-1">
+                              <Smile className="w-3 h-3" />
+                              <span className="text-xs opacity-75">
+                                Auto-reply
+                              </span>
+                            </div>
+                          )}
+                          <p>{message.message}</p>
+                          <p
+                            className={cn(
+                              "text-xs mt-1",
+                              message.sender === "admin"
+                                ? "text-slate-500"
+                                : "text-primary-foreground/70"
+                            )}
+                          >
+                            {formatDistanceToNow(new Date(message.timestamp), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {isTyping && (
                     <div className="flex justify-start">
                       <div className="bg-slate-100 px-3 py-2 rounded-lg">
@@ -650,6 +790,18 @@ export default function SupportChatWidget() {
                             className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
                             style={{ animationDelay: "0.2s" }}
                           />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {isSendingMessage && (
+                    <div className="flex justify-end">
+                      <div className="bg-primary/20 px-3 py-2 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                          <span className="text-xs text-primary">
+                            Sending...
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -670,7 +822,10 @@ export default function SupportChatWidget() {
                     onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                     className="flex-1"
                   />
-                  <Button onClick={sendMessage} disabled={!newMessage.trim()}>
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim() || isSendingMessage}
+                  >
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>

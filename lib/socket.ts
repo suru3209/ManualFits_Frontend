@@ -18,6 +18,13 @@ class SocketService {
   // Simple connection method
   async connect(token?: string): Promise<Socket> {
     return new Promise((resolve, reject) => {
+      // If already connected, return existing socket
+      if (this.socket && this.isConnected) {
+        console.log("🔌 Socket already connected, reusing existing connection");
+        resolve(this.socket);
+        return;
+      }
+
       // Clean up existing connection
       if (this.socket) {
         this.socket.disconnect();
@@ -34,7 +41,37 @@ class SocketService {
         localStorage.getItem("adminToken");
 
       if (!authToken) {
+        console.error("❌ No authentication token found");
         reject(new Error("No authentication token"));
+        return;
+      }
+
+      // Validate token format (basic JWT structure check)
+      const tokenParts = authToken.split(".");
+      if (tokenParts.length !== 3) {
+        console.error("❌ Invalid token format");
+        reject(new Error("Invalid token format"));
+        return;
+      }
+
+      // Check if token is expired (basic check without verification)
+      try {
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < currentTime) {
+          console.error("❌ Token has expired");
+          reject(new Error("Token has expired"));
+          return;
+        }
+        console.log("🔐 Token validation passed:", {
+          id: payload.id,
+          role: payload.role,
+          exp: payload.exp,
+          expDate: new Date(payload.exp * 1000),
+        });
+      } catch (error) {
+        console.error("❌ Failed to parse token payload:", error);
+        reject(new Error("Invalid token payload"));
         return;
       }
 
@@ -52,8 +89,8 @@ class SocketService {
         transports: ["websocket", "polling"],
         timeout: 10000,
         forceNew: true,
-        reconnection: true,
-        reconnectionAttempts: 3,
+        reconnection: false, // Disable auto-reconnection to prevent duplicates
+        reconnectionAttempts: 0,
         reconnectionDelay: 1000,
       });
 
@@ -83,6 +120,11 @@ class SocketService {
       // Auth error
       this.socket.on("auth_error", (error) => {
         console.error("❌ Socket authentication error:", error);
+        console.error("❌ Error details:", {
+          message: error?.message || "Unknown error",
+          type: error?.type || "Unknown type",
+          description: error?.description || "No description",
+        });
         console.error(
           "❌ This usually means your token is outdated. Please log out and log in again."
         );
@@ -183,18 +225,24 @@ class SocketService {
     callback: (data: { ticketId: string; message: any }) => void
   ) {
     if (this.socket) {
+      // Remove existing listener first to prevent duplicates
+      this.socket.off("new_support_message");
       this.socket.on("new_support_message", callback);
     }
   }
 
   onSupportUserTyping(callback: (data: { userType: string }) => void) {
     if (this.socket) {
+      // Remove existing listener first to prevent duplicates
+      this.socket.off("support_user_typing");
       this.socket.on("support_user_typing", callback);
     }
   }
 
   onSupportUserStoppedTyping(callback: (data: { userType: string }) => void) {
     if (this.socket) {
+      // Remove existing listener first to prevent duplicates
+      this.socket.off("support_user_stopped_typing");
       this.socket.on("support_user_stopped_typing", callback);
     }
   }
@@ -203,6 +251,8 @@ class SocketService {
     callback: (data: { ticketId: string; status: string }) => void
   ) {
     if (this.socket) {
+      // Remove existing listener first to prevent duplicates
+      this.socket.off("support_ticket_status_updated");
       this.socket.on("support_ticket_status_updated", callback);
     }
   }
@@ -292,6 +342,28 @@ class SocketService {
     } catch (error) {
       console.error("❌ Failed to decode token:", error);
       return null;
+    }
+  }
+
+  // Method to clear invalid tokens
+  clearInvalidToken() {
+    console.log("🧹 Clearing invalid tokens from localStorage");
+    localStorage.removeItem("token");
+    localStorage.removeItem("adminToken");
+  }
+
+  // Method to check if user should be redirected to login
+  shouldRedirectToLogin() {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("adminToken");
+    if (!token) return true;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp && payload.exp < currentTime;
+    } catch (error) {
+      return true;
     }
   }
 }

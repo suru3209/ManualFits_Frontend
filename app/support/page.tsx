@@ -912,9 +912,9 @@ export default function SupportPage() {
           );
         }
 
-        // Set up message listeners
+        // Set up message listener for real-time updates
         socketService.onNewSupportMessage((data) => {
-          console.log("📨 New message received:", data);
+          console.log("📨 Main page received message:", data);
           console.log(
             "📨 Current selected ticket:",
             selectedTicketRef.current?._id
@@ -924,6 +924,16 @@ export default function SupportPage() {
           const currentTicket = selectedTicketRef.current;
           if (currentTicket && data.ticketId === currentTicket._id) {
             const newMessage = data.message as Message;
+
+            // IGNORE sender's own messages - they are handled by sendMessage function
+            if (newMessage.sender === "user") {
+              console.log(
+                "🚫 Main page ignoring sender's own message:",
+                newMessage.message
+              );
+              return;
+            }
+
             console.log("📨 Adding message to chat:", newMessage.message);
 
             // Add message to chat
