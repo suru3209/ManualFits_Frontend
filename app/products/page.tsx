@@ -32,6 +32,12 @@ import {
 // Fetching products from backend API with retry logic
 async function fetchProducts(retryCount = 0): Promise<Product[]> {
   const apiUrl = buildApiUrl("/products");
+  console.log("🔍 API URL being used:", apiUrl);
+  console.log("🔍 Environment:", process.env.NODE_ENV);
+  console.log(
+    "🔍 NEXT_PUBLIC_API_BASE_URL:",
+    process.env.NEXT_PUBLIC_API_BASE_URL
+  );
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -52,9 +58,11 @@ async function fetchProducts(retryCount = 0): Promise<Product[]> {
       );
     }
     const json = await res.json();
+    console.log("🔍 API Response:", json);
 
     // Handle API response format - check for data field or direct array
     const products = json.data || (Array.isArray(json) ? json : []);
+    console.log("🔍 Extracted products:", products.length, "products");
 
     // Transform products to include legacy fields for backward compatibility
     return products.map((product: Product) => ({
@@ -163,6 +171,16 @@ function ProductsPageContent() {
     const loadProducts = async () => {
       try {
         console.log("🔄 Loading products...");
+
+        // Test direct API call first
+        const testUrl = "https://manualfits-backend.onrender.com/products";
+        console.log("🧪 Testing direct API call to:", testUrl);
+
+        const testResponse = await fetch(testUrl);
+        console.log("🧪 Test response status:", testResponse.status);
+        const testData = await testResponse.json();
+        console.log("🧪 Test response data:", testData);
+
         const data = await fetchProducts();
         console.log(`✅ Loaded ${data.length} products`);
         setProducts(data);

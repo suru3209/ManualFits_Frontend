@@ -32,8 +32,8 @@ const getBaseUrl = (): string => {
     if (isLocalhost) {
       return "http://localhost:8080";
     } else {
-      // For production, assume backend is on same domain with different port or subdomain
-      return `https://api.${currentHost}`;
+      // For production, use the known backend URL
+      return "https://manualfits-backend.onrender.com";
     }
   }
 
