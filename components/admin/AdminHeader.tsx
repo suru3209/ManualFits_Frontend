@@ -12,8 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, Menu, Search, User, Settings, LogOut } from "lucide-react";
+import { Bell, Menu, Search, User, LogOut } from "lucide-react";
 import { useAdmin } from "@/context/AdminContext";
+import AdminNotificationPanel from "./AdminNotificationPanel";
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -59,12 +60,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
       {/* Right side */}
       <div className="flex items-center space-x-4">
         {/* Notifications */}
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            3
-          </span>
-        </Button>
+        <AdminNotificationPanel />
 
         {/* Admin Profile Menu */}
         <DropdownMenu>
@@ -89,13 +85,11 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => (window.location.href = "/admin/profile")}
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-red-600">

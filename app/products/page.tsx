@@ -31,13 +31,7 @@ import {
 
 // Fetching products from backend API with retry logic
 async function fetchProducts(retryCount = 0): Promise<Product[]> {
-  const apiUrl = buildApiUrl("/api/products");
-  console.log(
-    "🔍 Fetching from API URL:",
-    apiUrl,
-    `(attempt ${retryCount + 1})`
-  );
-
+  const apiUrl = buildApiUrl("/products");
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -59,9 +53,8 @@ async function fetchProducts(retryCount = 0): Promise<Product[]> {
     }
     const json = await res.json();
 
-    // Handle new API response format with success/data structure
-    const products =
-      json.success && json.data ? json.data : Array.isArray(json) ? json : [];
+    // Handle API response format - check for data field or direct array
+    const products = json.data || (Array.isArray(json) ? json : []);
 
     // Transform products to include legacy fields for backward compatibility
     return products.map((product: Product) => ({
@@ -166,7 +159,7 @@ function ProductsPageContent() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error("❌ Error fetching products:", err);
         setLoading(false);
       });
   }, []);

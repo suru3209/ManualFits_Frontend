@@ -28,7 +28,10 @@ class SocketService {
         process.env.NEXT_PUBLIC_API_BASE_URL ||
         process.env.NEXT_PUBLIC_API_URL ||
         "http://localhost:8080";
-      const authToken = token || localStorage.getItem("token");
+      const authToken =
+        token ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("adminToken");
 
       if (!authToken) {
         reject(new Error("No authentication token"));
@@ -267,7 +270,8 @@ class SocketService {
 
   // Debug method to check token validity
   debugToken() {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("adminToken");
     if (!token) {
       console.log("❌ No token found in localStorage");
       return null;

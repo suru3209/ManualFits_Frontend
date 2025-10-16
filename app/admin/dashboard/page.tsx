@@ -53,10 +53,20 @@ interface ChartData {
   revenue: number;
 }
 
+interface ChartComparison {
+  orderGrowth: number;
+  revenueGrowth: number;
+  currentOrders: number;
+  lastOrders: number;
+  currentRevenue: number;
+  lastRevenue: number;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [comparison, setComparison] = useState<ChartComparison | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -67,46 +77,39 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:8080";
 
-      const response = await fetch(`${backendUrl}/api/admin/dashboard/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Fetch both stats and chart data in parallel
+      const [statsResponse, chartResponse] = await Promise.all([
+        fetch(`${backendUrl}/api/admin/dashboard/stats`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch(`${backendUrl}/api/admin/dashboard/chart-data`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData.stats);
+      }
 
-        // Generate sample chart data (in real app, this would come from API)
-        const sampleChartData = generateChartData();
-        setChartData(sampleChartData);
+      if (chartResponse.ok) {
+        const chartDataResponse = await chartResponse.json();
+        setChartData(chartDataResponse.data.chartData);
+        setComparison(chartDataResponse.data.comparison);
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const generateChartData = (): ChartData[] => {
-    const data = [];
-    const today = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      data.push({
-        date: date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        orders: Math.floor(Math.random() * 50) + 10,
-        revenue: Math.floor(Math.random() * 5000) + 1000,
-      });
-    }
-    return data;
   };
 
   if (isLoading) {
@@ -144,8 +147,8 @@ export default function AdminDashboard() {
       title: "Total Users",
       value: stats.totalUsers.toLocaleString(),
       icon: Users,
-      change: "+12%",
-      changeType: "positive" as const,
+      change: "N/A",
+      changeType: "neutral" as const,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
@@ -153,26 +156,34 @@ export default function AdminDashboard() {
       title: "Total Products",
       value: stats.totalProducts.toLocaleString(),
       icon: Package,
-      change: "+5%",
-      changeType: "positive" as const,
+      change: "N/A",
+      changeType: "neutral" as const,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
-      title: "Total Orders",
-      value: stats.totalOrders.toLocaleString(),
+      title: "Pending Orders",
+      value: stats.pendingOrders.toLocaleString(),
       icon: ShoppingCart,
-      change: "+18%",
-      changeType: "positive" as const,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
+      change: "N/A",
+      changeType: "neutral" as const,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
     },
     {
       title: "Total Revenue",
       value: `₹${stats.totalRevenue.toLocaleString()}`,
       icon: DollarSign,
-      change: "+8%",
-      changeType: "positive" as const,
+      change: comparison
+        ? `${comparison.revenueGrowth >= 0 ? "+" : ""}${
+            comparison.revenueGrowth
+          }%`
+        : "N/A",
+      changeType: comparison
+        ? comparison.revenueGrowth >= 0
+          ? "positive"
+          : "negative"
+        : "neutral",
       color: "text-orange-600",
       bgColor: "bg-orange-50",
     },
@@ -222,19 +233,21 @@ export default function AdminDashboard() {
                 <div className="flex items-center space-x-2 text-xs text-slate-600">
                   {kpi.changeType === "positive" ? (
                     <TrendingUp className="h-3 w-3 text-green-500" />
-                  ) : (
+                  ) : kpi.changeType === "negative" ? (
                     <TrendingDown className="h-3 w-3 text-red-500" />
-                  )}
+                  ) : null}
                   <span
                     className={
                       kpi.changeType === "positive"
                         ? "text-green-600"
-                        : "text-red-600"
+                        : kpi.changeType === "negative"
+                        ? "text-red-600"
+                        : "text-slate-500"
                     }
                   >
                     {kpi.change}
                   </span>
-                  <span>from last month</span>
+                  {kpi.changeType !== "neutral" && <span>from last month</span>}
                 </div>
               </CardContent>
             </Card>
@@ -247,8 +260,10 @@ export default function AdminDashboard() {
         {/* Sales Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-            <CardDescription>Daily sales for the last 7 days</CardDescription>
+            <CardTitle>Orders Overview</CardTitle>
+            <CardDescription>
+              Daily orders for the last 7 days (delivered orders only)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -275,7 +290,9 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>Daily revenue for the last 7 days</CardDescription>
+            <CardDescription>
+              Daily revenue for the last 7 days (delivered orders only)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">

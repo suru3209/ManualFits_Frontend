@@ -185,10 +185,21 @@ export default function ImageUploader({
     file: File
   ): Promise<{ url: string; publicId: string }> => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("image", file);
 
-    const response = await fetch("/api/admin/upload/image", {
+    // Use backend upload route instead of Next.js API route
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
+
+    const token = localStorage.getItem("adminToken");
+
+    const response = await fetch(`${backendUrl}/api/admin/upload`, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: formData,
     });
 
@@ -203,7 +214,11 @@ export default function ImageUploader({
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    return {
+      url: data.secure_url,
+      publicId: data.public_id,
+    };
   };
 
   const handleRemoveImage = async (index: number) => {
@@ -211,9 +226,19 @@ export default function ImageUploader({
 
     if (publicIdToDelete) {
       try {
-        // Delete from Cloudinary
-        await fetch(`/api/admin/upload/${publicIdToDelete}`, {
+        // Delete from Cloudinary via backend
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          process.env.NEXT_PUBLIC_API_URL ||
+          "http://localhost:8080";
+
+        const token = localStorage.getItem("adminToken");
+
+        await fetch(`${backendUrl}/api/admin/upload/${publicIdToDelete}`, {
           method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
       } catch (error) {
         console.error("Failed to delete from Cloudinary:", error);

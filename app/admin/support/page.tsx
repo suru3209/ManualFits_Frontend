@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import PermissionGuard from "@/components/admin/PermissionGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -671,370 +672,414 @@ export default function AdminSupportPage() {
   const filteredTickets = getFilteredTickets();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Customer Support
-          </h1>
-          <p className="text-slate-600">
-            Manage customer tickets and provide real-time support
-          </p>
+    <PermissionGuard requiredPermission="support.view">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Customer Support
+            </h1>
+            <p className="text-slate-600">
+              Manage customer tickets and provide real-time support
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="flex items-center space-x-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span>Online</span>
+            </Badge>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span>Online</span>
-          </Badge>
-        </div>
-      </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <MessageCircle className="w-8 h-8 text-blue-600" />
-                <div>
-                  <p className="text-2xl font-bold">{stats.totalTickets}</p>
-                  <p className="text-sm text-slate-600">Total Tickets</p>
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <MessageCircle className="w-8 h-8 text-blue-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalTickets}</p>
+                    <p className="text-sm text-slate-600">Total Tickets</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-8 h-8 text-orange-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{stats.openTickets}</p>
+                    <p className="text-sm text-slate-600">Open Tickets</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-8 h-8 text-purple-600" />
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {stats.inProgressTickets}
+                    </p>
+                    <p className="text-sm text-slate-600">In Progress</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{stats.closedTickets}</p>
+                    <p className="text-sm text-slate-600">Closed Tickets</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-400px)]">
+          {/* Tickets List */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Tickets</CardTitle>
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+                    <Input
+                      placeholder="Search tickets..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 w-48"
+                    />
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="active">Active</TabsTrigger>
+                  <TabsTrigger value="pending">Pending</TabsTrigger>
+                  <TabsTrigger value="closed">Closed</TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               <div className="flex items-center space-x-2">
-                <Clock className="w-8 h-8 text-orange-600" />
-                <div>
-                  <p className="text-2xl font-bold">{stats.openTickets}</p>
-                  <p className="text-sm text-slate-600">Open Tickets</p>
-                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={priorityFilter}
+                  onValueChange={setPriorityFilter}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
+            </CardHeader>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Users className="w-8 h-8 text-purple-600" />
-                <div>
-                  <p className="text-2xl font-bold">
-                    {stats.inProgressTickets}
-                  </p>
-                  <p className="text-sm text-slate-600">In Progress</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <div>
-                  <p className="text-2xl font-bold">{stats.closedTickets}</p>
-                  <p className="text-sm text-slate-600">Closed Tickets</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-400px)]">
-        {/* Tickets List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Tickets</CardTitle>
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
-                  <Input
-                    placeholder="Search tickets..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 w-48"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="active">Active</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="closed">Closed</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <div className="flex items-center space-x-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-1">
-                {filteredTickets.map((ticket) => (
-                  <div
-                    key={ticket._id}
-                    onClick={() => handleTicketSelect(ticket)}
-                    className={cn(
-                      "p-4 cursor-pointer border-l-4 transition-colors",
-                      selectedTicket?._id === ticket._id
-                        ? "bg-primary/5 border-primary"
-                        : "hover:bg-slate-50 border-transparent"
-                    )}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <Avatar className="w-6 h-6">
-                            <AvatarFallback className="text-xs">
-                              {ticket.userEmail.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <p className="text-sm font-medium truncate">
-                            {ticket.userId?.username || ticket.userEmail}
+            <CardContent className="p-0">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-1">
+                  {filteredTickets.map((ticket) => (
+                    <div
+                      key={ticket._id}
+                      onClick={() => handleTicketSelect(ticket)}
+                      className={cn(
+                        "p-4 cursor-pointer border-l-4 transition-colors",
+                        selectedTicket?._id === ticket._id
+                          ? "bg-primary/5 border-primary"
+                          : "hover:bg-slate-50 border-transparent"
+                      )}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <Avatar className="w-6 h-6">
+                              <AvatarFallback className="text-xs">
+                                {ticket.userEmail.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-sm font-medium truncate">
+                              {ticket.userId?.username || ticket.userEmail}
+                            </p>
+                          </div>
+                          <p className="text-sm text-slate-900 font-medium truncate mb-1">
+                            {ticket.subject}
                           </p>
+                          <div className="flex items-center space-x-2">
+                            <Badge
+                              variant={getStatusBadge(ticket.status)}
+                              className="text-xs"
+                            >
+                              {ticket.status}
+                            </Badge>
+                            <Badge
+                              variant={getPriorityBadge(ticket.priority)}
+                              className="text-xs"
+                            >
+                              {ticket.priority}
+                            </Badge>
+                          </div>
                         </div>
-                        <p className="text-sm text-slate-900 font-medium truncate mb-1">
-                          {ticket.subject}
-                        </p>
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                            variant={getStatusBadge(ticket.status)}
-                            className="text-xs"
-                          >
-                            {ticket.status}
-                          </Badge>
-                          <Badge
-                            variant={getPriorityBadge(ticket.priority)}
-                            className="text-xs"
-                          >
-                            {ticket.priority}
-                          </Badge>
+                        <div className="text-right">
+                          <p className="text-xs text-slate-500">
+                            {formatDistanceToNow(
+                              new Date(ticket.lastMessageAt),
+                              {
+                                addSuffix: true,
+                              }
+                            )}
+                          </p>
+                          {!ticket.feedback && ticket.status === "closed" && (
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-1" />
+                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500">
-                          {formatDistanceToNow(new Date(ticket.lastMessageAt), {
-                            addSuffix: true,
-                          })}
-                        </p>
-                        {!ticket.feedback && ticket.status === "closed" && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full mt-1" />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Chat Window */}
+          <Card className="lg:col-span-2 flex flex-col h-[600px]">
+            {selectedTicket ? (
+              <>
+                <CardHeader className="border-b flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">
+                        {selectedTicket.subject}
+                      </CardTitle>
+                      <p className="text-sm text-slate-600">
+                        {selectedTicket.userId?.username ||
+                          selectedTicket.userEmail}
+                      </p>
+
+                      {/* Order ID Display */}
+                      {selectedTicket.orderId && (
+                        <div className="p-2">
+                          <div className="flex items-center gap-2">
+                            <ShoppingCart className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-800">
+                              Order ID: {selectedTicket.orderId}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Order Information Display */}
+                      {selectedTicket.category === "order" &&
+                        selectedTicket.orderDetails && (
+                          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <ShoppingCart className="w-4 h-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-800">
+                                Order Details
+                              </span>
+                            </div>
+                            <div className="text-xs text-green-700">
+                              <div className="grid grid-cols-2 gap-1">
+                                <span>
+                                  Order #
+                                  {selectedTicket.orderDetails.orderNumber ||
+                                    selectedTicket.orderDetails._id.slice(-6)}
+                                </span>
+                                <span>
+                                  ₹
+                                  {selectedTicket.orderDetails.totalAmount.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="text-green-600 mt-1">
+                                Status: {selectedTicket.orderDetails.status} •{" "}
+                                {selectedTicket.orderDetails.items.length}{" "}
+                                item(s)
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={getStatusBadge(selectedTicket.status)}>
+                        {selectedTicket.status}
+                      </Badge>
+                      <Badge
+                        variant={getPriorityBadge(selectedTicket.priority)}
+                      >
+                        {selectedTicket.priority}
+                      </Badge>
+                      <div className="flex space-x-1">
+                        {selectedTicket.status !== "closed" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              updateTicketStatus(selectedTicket._id, "closed")
+                            }
+                          >
+                            Close
+                          </Button>
+                        )}
+                        {selectedTicket.status === "open" && (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              updateTicketStatus(
+                                selectedTicket._id,
+                                "in-progress"
+                              )
+                            }
+                          >
+                            Start
+                          </Button>
                         )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                </CardHeader>
 
-        {/* Chat Window */}
-        <Card className="lg:col-span-2 flex flex-col h-[600px]">
-          {selectedTicket ? (
-            <>
-              <CardHeader className="border-b flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {selectedTicket.subject}
-                    </CardTitle>
-                    <p className="text-sm text-slate-600">
-                      {selectedTicket.userId?.username ||
-                        selectedTicket.userEmail}
-                    </p>
-
-                    {/* Order ID Display */}
-                    {selectedTicket.orderId && (
-                      <div className="p-2">
-                        <div className="flex items-center gap-2">
-                          <ShoppingCart className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-800">
-                            Order ID: {selectedTicket.orderId}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Order Information Display */}
-                    {selectedTicket.category === "order" &&
-                      selectedTicket.orderDetails && (
-                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1">
-                            <ShoppingCart className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-800">
-                              Order Details
-                            </span>
-                          </div>
-                          <div className="text-xs text-green-700">
-                            <div className="grid grid-cols-2 gap-1">
-                              <span>
-                                Order #
-                                {selectedTicket.orderDetails.orderNumber ||
-                                  selectedTicket.orderDetails._id.slice(-6)}
-                              </span>
-                              <span>
-                                ₹
-                                {selectedTicket.orderDetails.totalAmount.toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="text-green-600 mt-1">
-                              Status: {selectedTicket.orderDetails.status} •{" "}
-                              {selectedTicket.orderDetails.items.length} item(s)
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={getStatusBadge(selectedTicket.status)}>
-                      {selectedTicket.status}
-                    </Badge>
-                    <Badge variant={getPriorityBadge(selectedTicket.priority)}>
-                      {selectedTicket.priority}
-                    </Badge>
-                    <div className="flex space-x-1">
-                      {selectedTicket.status !== "closed" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            updateTicketStatus(selectedTicket._id, "closed")
-                          }
-                        >
-                          Close
-                        </Button>
-                      )}
-                      {selectedTicket.status === "open" && (
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            updateTicketStatus(
-                              selectedTicket._id,
-                              "in-progress"
-                            )
-                          }
-                        >
-                          Start
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="flex-1 flex flex-col p-0 min-h-0 admin-chat-container">
-                <div className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full p-4 admin-chat-scroll">
-                    <div className="space-y-4">
-                      {messages.map((message, index) => {
-                        // Only log if message has attachments
-                        return (
-                          <div
-                            key={`${message._id}-${message.timestamp}-${index}`}
-                            className={cn(
-                              "flex",
-                              message.sender === "admin"
-                                ? "justify-end"
-                                : "justify-start"
-                            )}
-                          >
+                <CardContent className="flex-1 flex flex-col p-0 min-h-0 admin-chat-container">
+                  <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full p-4 admin-chat-scroll">
+                      <div className="space-y-4">
+                        {messages.map((message, index) => {
+                          // Only log if message has attachments
+                          return (
                             <div
+                              key={`${message._id}-${message.timestamp}-${index}`}
                               className={cn(
-                                "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
+                                "flex",
                                 message.sender === "admin"
-                                  ? "bg-primary text-white"
-                                  : "bg-slate-100 text-slate-900"
+                                  ? "justify-end"
+                                  : "justify-start"
                               )}
                             >
-                              {message.messageType === "auto-reply" && (
-                                <div className="flex items-center space-x-1 mb-1">
-                                  <Smile className="w-3 h-3" />
-                                  <span className="text-xs opacity-75">
-                                    Auto-reply
-                                  </span>
-                                </div>
-                              )}
-                              <p className="text-sm">{message.message}</p>
+                              <div
+                                className={cn(
+                                  "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
+                                  message.sender === "admin"
+                                    ? "bg-primary text-white"
+                                    : "bg-slate-100 text-slate-900"
+                                )}
+                              >
+                                {message.messageType === "auto-reply" && (
+                                  <div className="flex items-center space-x-1 mb-1">
+                                    <Smile className="w-3 h-3" />
+                                    <span className="text-xs opacity-75">
+                                      Auto-reply
+                                    </span>
+                                  </div>
+                                )}
+                                <p className="text-sm">{message.message}</p>
 
-                              {/* File Attachments */}
-                              {(() => {
-                                console.log(
-                                  "Admin: Checking message attachments:",
-                                  {
-                                    hasAttachments: !!(
-                                      message.attachments &&
-                                      message.attachments.length > 0
-                                    ),
-                                    attachments: message.attachments,
-                                    messageId: message._id,
-                                  }
-                                );
-                                return null;
-                              })()}
-                              {message.attachments &&
-                                message.attachments.length > 0 && (
-                                  <div className="mt-2 space-y-2">
-                                    {message.attachments.map(
-                                      (attachment, index) => (
-                                        <div
-                                          key={index}
-                                          className="border rounded-lg p-2 bg-white/10"
-                                        >
-                                          {(
-                                            attachment.fileType ||
-                                            attachment.mimetype
-                                          )?.startsWith("image/") ? (
-                                            <div className="space-y-2">
-                                              <img
-                                                src={attachment.url}
-                                                alt={attachment.filename}
-                                                className="max-w-full h-auto max-h-48 rounded object-cover cursor-pointer"
-                                                onClick={() =>
-                                                  window.open(
-                                                    attachment.url,
-                                                    "_blank"
-                                                  )
-                                                }
-                                              />
-                                              <div className="flex items-center justify-between text-xs">
-                                                <span className="truncate">
-                                                  {attachment.filename}
-                                                </span>
+                                {/* File Attachments */}
+                                {(() => {
+                                  console.log(
+                                    "Admin: Checking message attachments:",
+                                    {
+                                      hasAttachments: !!(
+                                        message.attachments &&
+                                        message.attachments.length > 0
+                                      ),
+                                      attachments: message.attachments,
+                                      messageId: message._id,
+                                    }
+                                  );
+                                  return null;
+                                })()}
+                                {message.attachments &&
+                                  message.attachments.length > 0 && (
+                                    <div className="mt-2 space-y-2">
+                                      {message.attachments.map(
+                                        (attachment, index) => (
+                                          <div
+                                            key={index}
+                                            className="border rounded-lg p-2 bg-white/10"
+                                          >
+                                            {(
+                                              attachment.fileType ||
+                                              attachment.mimetype
+                                            )?.startsWith("image/") ? (
+                                              <div className="space-y-2">
+                                                <img
+                                                  src={attachment.url}
+                                                  alt={attachment.filename}
+                                                  className="max-w-full h-auto max-h-48 rounded object-cover cursor-pointer"
+                                                  onClick={() =>
+                                                    window.open(
+                                                      attachment.url,
+                                                      "_blank"
+                                                    )
+                                                  }
+                                                />
+                                                <div className="flex items-center justify-between text-xs">
+                                                  <span className="truncate">
+                                                    {attachment.filename}
+                                                  </span>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      window.open(
+                                                        attachment.url,
+                                                        "_blank"
+                                                      )
+                                                    }
+                                                    className="p-1 h-auto"
+                                                  >
+                                                    <Download className="w-3 h-3" />
+                                                  </Button>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-2">
+                                                  <File className="w-4 h-4" />
+                                                  <div>
+                                                    <p className="text-sm font-medium truncate">
+                                                      {attachment.filename}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                      {attachment.fileSize
+                                                        ? (
+                                                            attachment.fileSize /
+                                                            1024 /
+                                                            1024
+                                                          ).toFixed(1) + " MB"
+                                                        : ""}
+                                                    </p>
+                                                  </div>
+                                                </div>
                                                 <Button
                                                   variant="ghost"
                                                   size="sm"
@@ -1046,249 +1091,218 @@ export default function AdminSupportPage() {
                                                   }
                                                   className="p-1 h-auto"
                                                 >
-                                                  <Download className="w-3 h-3" />
+                                                  <Download className="w-4 h-4" />
                                                 </Button>
                                               </div>
-                                            </div>
-                                          ) : (
-                                            <div className="flex items-center justify-between">
-                                              <div className="flex items-center space-x-2">
-                                                <File className="w-4 h-4" />
-                                                <div>
-                                                  <p className="text-sm font-medium truncate">
-                                                    {attachment.filename}
-                                                  </p>
-                                                  <p className="text-xs text-slate-500">
-                                                    {attachment.fileSize
-                                                      ? (
-                                                          attachment.fileSize /
-                                                          1024 /
-                                                          1024
-                                                        ).toFixed(1) + " MB"
-                                                      : ""}
-                                                  </p>
-                                                </div>
-                                              </div>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                  window.open(
-                                                    attachment.url,
-                                                    "_blank"
-                                                  )
-                                                }
-                                                className="p-1 h-auto"
-                                              >
-                                                <Download className="w-4 h-4" />
-                                              </Button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )
-                                    )}
-                                  </div>
-                                )}
-                              <p
-                                className={cn(
-                                  "text-xs mt-1",
-                                  message.sender === "admin"
-                                    ? "text-primary-foreground/70"
-                                    : "text-slate-500"
-                                )}
-                              >
-                                {formatDistanceToNow(
-                                  new Date(message.timestamp),
-                                  {
-                                    addSuffix: true,
-                                  }
-                                )}
-                              </p>
+                                            )}
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                                <p
+                                  className={cn(
+                                    "text-xs mt-1",
+                                    message.sender === "admin"
+                                      ? "text-primary-foreground/70"
+                                      : "text-slate-500"
+                                  )}
+                                >
+                                  {formatDistanceToNow(
+                                    new Date(message.timestamp),
+                                    {
+                                      addSuffix: true,
+                                    }
+                                  )}
+                                </p>
+                              </div>
                             </div>
+                          );
+                        })}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+                  </div>
+
+                  <div className="border-t p-4 flex-shrink-0">
+                    {/* Quick Replies Drawer */}
+                    <div className="mb-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setIsQuickRepliesOpen(!isQuickRepliesOpen)
+                        }
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Quick Replies
+                        <ChevronDown
+                          className={cn(
+                            "w-4 h-4 transition-transform",
+                            isQuickRepliesOpen ? "rotate-180" : ""
+                          )}
+                        />
+                      </Button>
+
+                      {isQuickRepliesOpen && (
+                        <div className="mt-2 p-3 bg-slate-50 rounded-lg border">
+                          <p className="text-xs font-medium text-slate-700 mb-2">
+                            Select a quick reply:
+                          </p>
+                          <div className="space-y-1">
+                            {QUICK_REPLIES.map((reply) => (
+                              <button
+                                key={reply}
+                                onClick={() => {
+                                  setNewMessage(reply);
+                                  setIsQuickRepliesOpen(false);
+                                }}
+                                className="w-full text-left p-2 text-sm hover:bg-white hover:shadow-sm rounded border transition-colors"
+                              >
+                                {reply}
+                              </button>
+                            ))}
                           </div>
-                        );
-                      })}
-                      <div ref={messagesEndRef} />
+                        </div>
+                      )}
                     </div>
-                  </ScrollArea>
-                </div>
 
-                <div className="border-t p-4 flex-shrink-0">
-                  {/* Quick Replies Drawer */}
-                  <div className="mb-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsQuickRepliesOpen(!isQuickRepliesOpen)}
-                      className="flex items-center gap-2"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      Quick Replies
-                      <ChevronDown
-                        className={cn(
-                          "w-4 h-4 transition-transform",
-                          isQuickRepliesOpen ? "rotate-180" : ""
-                        )}
-                      />
-                    </Button>
-
-                    {isQuickRepliesOpen && (
-                      <div className="mt-2 p-3 bg-slate-50 rounded-lg border">
-                        <p className="text-xs font-medium text-slate-700 mb-2">
-                          Select a quick reply:
-                        </p>
+                    {/* Selected Files Preview */}
+                    {selectedFiles.length > 0 && (
+                      <div className="mb-3 p-2 bg-slate-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">
+                            Selected Files ({selectedFiles.length})
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedFiles([])}
+                            className="text-slate-500 hover:text-slate-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                         <div className="space-y-1">
-                          {QUICK_REPLIES.map((reply) => (
-                            <button
-                              key={reply}
-                              onClick={() => {
-                                setNewMessage(reply);
-                                setIsQuickRepliesOpen(false);
-                              }}
-                              className="w-full text-left p-2 text-sm hover:bg-white hover:shadow-sm rounded border transition-colors"
+                          {selectedFiles.map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between text-sm"
                             >
-                              {reply}
-                            </button>
+                              <div className="flex items-center space-x-2">
+                                {file.type.startsWith("image/") ? (
+                                  <Image className="w-4 h-4 text-blue-500" />
+                                ) : (
+                                  <File className="w-4 h-4 text-slate-500" />
+                                )}
+                                <span className="truncate">{file.name}</span>
+                                <span className="text-slate-500">
+                                  (
+                                  {file.size >= 1024 * 1024
+                                    ? `${(file.size / (1024 * 1024)).toFixed(
+                                        1
+                                      )}MB`
+                                    : file.size >= 1024
+                                    ? `${(file.size / 1024).toFixed(1)}KB`
+                                    : `${file.size}B`}
+                                  )
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(index)}
+                                className="text-red-500 hover:text-red-700 p-1"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  {/* Selected Files Preview */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mb-3 p-2 bg-slate-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-slate-700">
-                          Selected Files ({selectedFiles.length})
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedFiles([])}
-                          className="text-slate-500 hover:text-slate-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="space-y-1">
-                        {selectedFiles.map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between text-sm"
-                          >
-                            <div className="flex items-center space-x-2">
-                              {file.type.startsWith("image/") ? (
-                                <Image className="w-4 h-4 text-blue-500" />
-                              ) : (
-                                <File className="w-4 h-4 text-slate-500" />
-                              )}
-                              <span className="truncate">{file.name}</span>
-                              <span className="text-slate-500">
-                                (
-                                {file.size >= 1024 * 1024
-                                  ? `${(file.size / (1024 * 1024)).toFixed(
-                                      1
-                                    )}MB`
-                                  : file.size >= 1024
-                                  ? `${(file.size / 1024).toFixed(1)}KB`
-                                  : `${file.size}B`}
-                                )
-                              </span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFile(index)}
-                              className="text-red-500 hover:text-red-700 p-1"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      placeholder="Type your message..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) =>
-                        e.key === "Enter" &&
-                        (selectedFiles.length > 0
-                          ? sendMessageWithFiles()
-                          : sendMessage())
-                      }
-                      className="flex-1"
-                    />
-
-                    {/* File Upload Button */}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isUploading}
-                      onClick={() => {
-                        const fileInput = document.getElementById(
-                          "admin-file-input"
-                        ) as HTMLInputElement;
-                        if (fileInput) {
-                          fileInput.click();
-                        } else {
-                          console.error("Admin: File input not found");
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        placeholder="Type your message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (selectedFiles.length > 0
+                            ? sendMessageWithFiles()
+                            : sendMessage())
                         }
-                      }}
-                    >
-                      <Paperclip className="w-4 h-4" />
-                    </Button>
-                    <input
-                      id="admin-file-input"
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf,.txt,.doc,.docx"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      style={{ display: "none" }}
-                    />
+                        className="flex-1"
+                      />
 
-                    <Button
-                      onClick={
-                        selectedFiles.length > 0
-                          ? sendMessageWithFiles
-                          : sendMessage
-                      }
-                      disabled={
-                        (!newMessage.trim() && selectedFiles.length === 0) ||
-                        isUploading
-                      }
-                    >
-                      {isUploading ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
+                      {/* File Upload Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploading}
+                        onClick={() => {
+                          const fileInput = document.getElementById(
+                            "admin-file-input"
+                          ) as HTMLInputElement;
+                          if (fileInput) {
+                            fileInput.click();
+                          } else {
+                            console.error("Admin: File input not found");
+                          }
+                        }}
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </Button>
+                      <input
+                        id="admin-file-input"
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.txt,.doc,.docx"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        style={{ display: "none" }}
+                      />
+
+                      <Button
+                        onClick={
+                          selectedFiles.length > 0
+                            ? sendMessageWithFiles
+                            : sendMessage
+                        }
+                        disabled={
+                          (!newMessage.trim() && selectedFiles.length === 0) ||
+                          isUploading
+                        }
+                      >
+                        {isUploading ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
+                </CardContent>
+              </>
+            ) : (
+              <CardContent className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">
+                    No ticket selected
+                  </h3>
+                  <p className="text-slate-600">
+                    Select a ticket from the list to start chatting
+                  </p>
                 </div>
               </CardContent>
-            </>
-          ) : (
-            <CardContent className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <MessageCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-900 mb-2">
-                  No ticket selected
-                </h3>
-                <p className="text-slate-600">
-                  Select a ticket from the list to start chatting
-                </p>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+            )}
+          </Card>
+        </div>
       </div>
-    </div>
+    </PermissionGuard>
   );
 }

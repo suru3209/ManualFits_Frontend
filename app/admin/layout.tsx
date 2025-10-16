@@ -5,14 +5,16 @@ import { useRouter, usePathname } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { AdminProvider } from "@/context/AdminContext";
+import {
+  AdminNotificationProvider,
+  useAdminNotifications,
+} from "@/context/AdminNotificationContext";
 import { Loader2 } from "lucide-react";
 import { Toaster } from "sonner";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Inner component that uses the notification context
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
+  const { reconnectIfNeeded } = useAdminNotifications();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -34,7 +36,9 @@ export default function AdminLayout({
       // Verify token with backend
       try {
         const backendUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          process.env.NEXT_PUBLIC_API_URL ||
+          "http://localhost:8080";
         const response = await fetch(
           `${backendUrl}/api/admin/dashboard/stats`,
           {
@@ -46,6 +50,10 @@ export default function AdminLayout({
 
         if (response.ok) {
           setIsAuthenticated(true);
+          // Trigger socket reconnection when authenticated
+          setTimeout(() => {
+            reconnectIfNeeded();
+          }, 1000);
           if (pathname === "/admin/login") {
             router.push("/admin/dashboard");
           }
@@ -65,7 +73,7 @@ export default function AdminLayout({
     };
 
     checkAuth();
-  }, [router, pathname]);
+  }, [router, pathname, reconnectIfNeeded]);
 
   if (isLoading) {
     return (
@@ -87,25 +95,37 @@ export default function AdminLayout({
   }
 
   return (
-    <AdminProvider>
-      <div className="min-h-screen bg-slate-50">
-        <AdminSidebar
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+    <div className="min-h-screen bg-slate-50">
+      <AdminSidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+      <div
+        className={`transition-all duration-300 ${
+          sidebarCollapsed ? "ml-16" : "ml-64"
+        }`}
+      >
+        <AdminHeader
+          onMenuClick={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
-        <div
-          className={`transition-all duration-300 ${
-            sidebarCollapsed ? "ml-16" : "ml-64"
-          }`}
-        >
-          <AdminHeader
-            onMenuClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-          <main className="p-6">{children}</main>
-        </div>
+        <main className="p-6">{children}</main>
       </div>
-      {/* Disable all sonner toasts */}
-      <Toaster />
+    </div>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminProvider>
+      <AdminNotificationProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+        {/* Disable all sonner toasts */}
+        <Toaster />
+      </AdminNotificationProvider>
     </AdminProvider>
   );
 }
