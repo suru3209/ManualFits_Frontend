@@ -375,22 +375,6 @@ export default function SupportPage() {
         );
 
         console.log("📨 Message added to UI immediately");
-
-        // Also send via socket for real-time sync (optional)
-        console.log("📡 Checking socket connection...");
-        console.log("📡 Socket connected:", socketService.isSocketConnected());
-        console.log("📡 Socket status:", socketService.getConnectionStatus());
-
-        if (socketService.isSocketConnected()) {
-          console.log("📡 Sending message via socket for real-time sync");
-          socketService.sendSupportMessage(
-            selectedTicket._id,
-            newMessage,
-            "text"
-          );
-        } else {
-          console.log("❌ Socket not connected, skipping socket send");
-        }
       } else {
         console.error("❌ Failed to send message:", response.status);
         alert("Failed to send message. Please try again.");

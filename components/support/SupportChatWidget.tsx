@@ -219,9 +219,6 @@ export default function SupportChatWidget() {
 
       if (response.ok) {
         setNewMessage("");
-
-        // Send via socket
-        socketService.sendSupportMessage(currentTicket._id, newMessage);
       }
     } catch (error) {
       console.error("Error sending message:", error);
