@@ -75,7 +75,13 @@ interface Review {
   productId: string;
   product: {
     name: string;
+    title: string;
     images: string[];
+    variants: Array<{
+      size: string;
+      color: string;
+      images: string[];
+    }>;
   };
   userId: string;
   user: {
