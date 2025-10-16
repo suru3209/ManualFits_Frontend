@@ -356,10 +356,32 @@ export default function ReviewsPage() {
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <div className="w-10 h-10 bg-slate-100 rounded overflow-hidden">
-                                {review.product?.images[0] ? (
+                                {(() => {
+                                  console.log(
+                                    "🔍 Review product data:",
+                                    review.product
+                                  );
+                                  console.log(
+                                    "🔍 Product variants:",
+                                    review.product?.variants
+                                  );
+
+                                  // Get first image from variants
+                                  const firstImage =
+                                    review.product?.variants?.[0]?.images?.[0];
+                                  console.log(
+                                    "🔍 First image from variants:",
+                                    firstImage
+                                  );
+
+                                  return firstImage;
+                                })() ? (
                                   <Image
-                                    src={review.product.images[0]}
-                                    alt={review.product.name}
+                                    src={
+                                      review.product?.variants?.[0]
+                                        ?.images?.[0] || ""
+                                    }
+                                    alt={review.product?.name || "Product"}
                                     width={40}
                                     height={40}
                                     className="w-full h-full object-cover"
@@ -594,10 +616,14 @@ export default function ReviewsPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-slate-100 rounded overflow-hidden">
-                          {selectedReview.product?.images[0] ? (
+                          {selectedReview.product?.variants?.[0]
+                            ?.images?.[0] ? (
                             <Image
-                              src={selectedReview.product.images[0]}
-                              alt={selectedReview.product.name}
+                              src={
+                                selectedReview.product?.variants?.[0]
+                                  ?.images?.[0] || ""
+                              }
+                              alt={selectedReview.product?.name || "Product"}
                               width={48}
                               height={48}
                               className="w-full h-full object-cover"
@@ -621,12 +647,26 @@ export default function ReviewsPage() {
                         </div>
                       </div>
                       <div className="flex space-x-2">
+                        {(() => {
+                          console.log(
+                            "🔍 Selected review status:",
+                            selectedReview.status
+                          );
+                          console.log(
+                            "🔍 Status config:",
+                            statusConfig[selectedReview.status]
+                          );
+                          return null;
+                        })()}
                         <Badge
                           className={`${
-                            statusConfig[selectedReview.status].color
+                            statusConfig[selectedReview.status]?.color ||
+                            "bg-gray-100 text-gray-800"
                           } border-0`}
                         >
-                          {statusConfig[selectedReview.status].label}
+                          {statusConfig[selectedReview.status]?.label ||
+                            selectedReview.status ||
+                            "Unknown"}
                         </Badge>
                         {selectedReview.verified && (
                           <Badge

@@ -299,7 +299,11 @@ export default function ProductPage() {
         images: newReview.images,
       };
 
+      console.log("🔍 Submitting review with data:", reviewData);
+      console.log("🔍 Images being sent:", newReview.images);
+
       const newReviewData = await createReview(reviewData);
+      console.log("🔍 Review created successfully:", newReviewData);
       if (newReviewData) {
         // Reload all reviews to ensure consistency
         await loadReviews();
@@ -349,7 +353,11 @@ export default function ProductPage() {
         images: newReview.images,
       };
 
+      console.log("🔍 Updating review with data:", updateData);
+      console.log("🔍 Images being sent for update:", newReview.images);
+
       const updatedReview = await updateReview(editingReview._id, updateData);
+      console.log("🔍 Review updated successfully:", updatedReview);
       if (updatedReview) {
         // Reload all reviews to ensure consistency
         await loadReviews();
@@ -480,17 +488,27 @@ export default function ProductPage() {
         return;
       }
 
+      console.log("🔍 Uploading images:", fileArray.length, "files");
       const uploadResult = await uploadMultipleImages(fileArray, token);
+      console.log("🔍 Upload result:", uploadResult);
 
-      if (uploadResult && Array.isArray(uploadResult)) {
-        const uploadedUrls = uploadResult.map((item: any) => item.url);
-        // setUploadedImages((prev) => [...prev, ...uploadedUrls]);
+      if (
+        uploadResult &&
+        uploadResult.success &&
+        uploadResult.data?.successful
+      ) {
+        const uploadedUrls = uploadResult.data.successful.map(
+          (item: any) => item.url
+        );
+        console.log("🔍 Uploaded URLs:", uploadedUrls);
+
         setNewReview((prev) => ({
           ...prev,
           images: [...prev.images, ...uploadedUrls],
         }));
         showToast(`${uploadedUrls.length} image(s) uploaded successfully`);
       } else {
+        console.error("❌ Upload failed:", uploadResult);
         showToast("Failed to upload images");
       }
     } catch (error) {
