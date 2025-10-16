@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,13 +16,10 @@ import {
   ChevronRight,
   LogOut,
   User,
-  BarChart3,
   MessageCircle,
-  RotateCcw,
   CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 interface AdminSidebarProps {
   collapsed: boolean;

@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 
 interface PermissionGuardProps {
   children: React.ReactNode;

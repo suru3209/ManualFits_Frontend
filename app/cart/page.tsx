@@ -4,13 +4,11 @@ import { ShoppingBag, Heart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
-import { Product } from "../../types/types";
 import { useRouter } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";

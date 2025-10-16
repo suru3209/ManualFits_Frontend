@@ -12,7 +12,6 @@ import { useToast } from "@/context/ToastContext";
 import { uploadSingleImage } from "@/lib/cloudinary";
 import {
   deleteReview,
-  checkUserCanReview,
   fetchProductReviews,
   toggleReviewLike,
   type Review,
@@ -22,7 +21,6 @@ import {
   User,
   CreditCard,
   Gift,
-  Settings,
   ShoppingBag,
   Star,
   Bell,
@@ -31,7 +29,6 @@ import {
   Smartphone,
   Ticket,
   MessageCircle,
-  Home,
   Package,
   Heart,
   FileText,
@@ -46,7 +43,6 @@ import {
   Edit3,
   Camera,
   Edit,
-  MoreVertical,
   Trash2,
   X,
 } from "lucide-react";
@@ -89,7 +85,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,

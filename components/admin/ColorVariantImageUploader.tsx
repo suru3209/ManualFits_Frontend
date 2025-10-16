@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   Upload,
@@ -18,7 +17,6 @@ import {
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors,
 } from "@dnd-kit/core";
 import {
   arrayMove,

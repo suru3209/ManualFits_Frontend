@@ -11,7 +11,6 @@ import {
   Package,
   Truck,
   ShoppingBag,
-  ArrowLeft,
   Home,
   Clock,
 } from "lucide-react";

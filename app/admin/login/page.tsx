@@ -16,7 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { buildApiUrl } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({

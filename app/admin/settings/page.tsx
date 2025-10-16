@@ -51,14 +51,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  Plus,
   MoreHorizontal,
   Edit,
   Trash2,
   Shield,
   UserPlus,
   Users,
-  Key,
   Loader2,
   CheckCircle,
   XCircle,

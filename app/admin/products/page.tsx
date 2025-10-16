@@ -33,7 +33,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -58,14 +57,11 @@ import { toast } from "sonner";
 import {
   Plus,
   Search,
-  Filter,
   MoreHorizontal,
   Edit,
   Trash2,
   Eye,
-  Copy,
   Package,
-  AlertTriangle,
   Loader2,
 } from "lucide-react";
 import ProductForm from "@/components/admin/ProductForm";

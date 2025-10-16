@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -28,7 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Save, ArrowLeft, Loader2, X, Plus, Calendar } from "lucide-react";
+import { Save, ArrowLeft, Loader2, X } from "lucide-react";
 
 const couponSchema = z
   .object({
@@ -160,7 +159,9 @@ export default function CouponForm({
       setIsSubmitting(true);
       const token = localStorage.getItem("adminToken");
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:8080";
 
       const couponData = {
         ...data,

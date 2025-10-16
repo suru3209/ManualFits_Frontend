@@ -3,7 +3,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { Product } from "../../types/types";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
-import { Heart, ShoppingBag, Plus, Filter, Menu } from "lucide-react";
+import { Heart, ShoppingBag, Filter, Menu } from "lucide-react";
 import { buildApiUrl } from "@/lib/api";
 import {
   Select,
@@ -74,16 +74,23 @@ async function fetchProducts(retryCount = 0): Promise<Product[]> {
     }));
   } catch (error) {
     console.error("🚨 Error fetching products:", error);
+    console.error("API URL attempted:", apiUrl);
+    console.error("Environment:", process.env.NODE_ENV);
 
     // Retry logic - retry up to 3 times with exponential backoff
     if (retryCount < 3) {
+      console.log(`🔄 Retrying fetch (attempt ${retryCount + 1}/3)...`);
       await new Promise((resolve) =>
         setTimeout(resolve, (retryCount + 1) * 1000)
       );
       return fetchProducts(retryCount + 1);
     }
 
-    throw error;
+    // If all retries failed, return empty array instead of throwing
+    console.error(
+      "❌ All retry attempts failed, returning empty products array"
+    );
+    return [];
   }
 }
 
@@ -153,15 +160,21 @@ function ProductsPageContent() {
 
   // Fetch products on mount
   useEffect(() => {
-    fetchProducts()
-      .then((data) => {
+    const loadProducts = async () => {
+      try {
+        console.log("🔄 Loading products...");
+        const data = await fetchProducts();
+        console.log(`✅ Loaded ${data.length} products`);
         setProducts(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("❌ Error fetching products:", err);
+        setProducts([]); // Set empty array on error
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    loadProducts();
   }, []);
 
   // Filter products based on selected filters
@@ -754,9 +767,23 @@ function ProductsPageContent() {
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
-              No products found matching your filters.
-            </p>
+            {products.length === 0 ? (
+              <div>
+                <p className="text-gray-500 text-lg mb-4">
+                  Unable to load products. Please check your connection.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-lg">
+                No products found matching your filters.
+              </p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0">

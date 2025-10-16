@@ -21,8 +21,6 @@ import {
   Star,
   AlertTriangle,
   Eye,
-  Edit,
-  Plus,
 } from "lucide-react";
 import {
   LineChart,

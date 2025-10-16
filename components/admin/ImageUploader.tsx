@@ -18,7 +18,6 @@ import {
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors,
 } from "@dnd-kit/core";
 import {
   arrayMove,

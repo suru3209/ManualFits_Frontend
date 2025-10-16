@@ -4,11 +4,39 @@
 
 // Base API URL - adjust based on environment
 const getBaseUrl = (): string => {
+  // Check for production environment
+  const isProduction = process.env.NODE_ENV === "production";
+
   if (typeof window === "undefined") {
     // Server-side
+    if (isProduction) {
+      // In production, try to use environment variable or default to relative path
+      return process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+    }
     return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
   }
+
   // Client-side
+  if (isProduction) {
+    // In production, use environment variable or try to detect the backend URL
+    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (envUrl) {
+      return envUrl;
+    }
+
+    // Try to construct backend URL from current domain
+    const currentHost = window.location.hostname;
+    const isLocalhost =
+      currentHost === "localhost" || currentHost === "127.0.0.1";
+
+    if (isLocalhost) {
+      return "http://localhost:8080";
+    } else {
+      // For production, assume backend is on same domain with different port or subdomain
+      return `https://api.${currentHost}`;
+    }
+  }
+
   return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 };
 
