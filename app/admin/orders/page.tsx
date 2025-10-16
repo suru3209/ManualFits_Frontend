@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import {
   Card,
@@ -38,8 +38,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -353,7 +351,6 @@ export default function OrdersPage() {
                   </TableHeader>
                   <TableBody>
                     {orders.map((order) => {
-                      const statusConfigItem = statusConfig[order.status];
                       return (
                         <TableRow key={order._id}>
                           <TableCell>

@@ -53,14 +53,63 @@ export default function AdminProfile() {
 
   useEffect(() => {
     if (admin) {
-      setProfile(admin);
+      // Convert Admin context type to AdminProfile type
+      const adminProfile: AdminProfile = {
+        _id: admin.id,
+        username: admin.username,
+        email: "", // Will be fetched from backend
+        role: admin.role,
+        createdAt: admin.lastLogin || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setProfile(adminProfile);
       setFormData({
         username: admin.username || "",
-        email: admin.email || "",
+        email: "", // Will be fetched from backend
       });
       setIsLoading(false);
+
+      // Fetch complete admin profile from backend
+      fetchAdminProfile();
     }
   }, [admin]);
+
+  const fetchAdminProfile = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:8080";
+
+      const response = await fetch(`${backendUrl}/api/admin/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const completeProfile: AdminProfile = {
+          _id: data.admin._id,
+          username: data.admin.username,
+          email: data.admin.email || "",
+          role: data.admin.role,
+          createdAt: data.admin.createdAt,
+          updatedAt: data.admin.updatedAt,
+        };
+
+        setProfile(completeProfile);
+        setFormData({
+          username: data.admin.username || "",
+          email: data.admin.email || "",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch admin profile:", error);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
