@@ -181,6 +181,16 @@ function ProductsPageContent() {
         const testData = await testResponse.json();
         console.log("🧪 Test response data:", testData);
 
+        // Test admin API call to see all products
+        const adminUrl =
+          "https://manualfits-backend.onrender.com/products?admin=true";
+        console.log("🧪 Testing admin API call to:", adminUrl);
+
+        const adminResponse = await fetch(adminUrl);
+        console.log("🧪 Admin response status:", adminResponse.status);
+        const adminData = await adminResponse.json();
+        console.log("🧪 Admin response data:", adminData);
+
         const data = await fetchProducts();
         console.log(`✅ Loaded ${data.length} products`);
         setProducts(data);
